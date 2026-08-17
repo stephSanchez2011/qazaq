@@ -175,6 +175,14 @@ function lookupFr(text: string): string | undefined {
   return FR_SAY[key]
 }
 
+const KK_VOWELS = 'аәеёийоөуұүыіэюя'
+
+function frenchYe(prev: string | undefined): string {
+  if (!prev || prev === ' ' || KK_VOWELS.includes(prev)) return 'ie'
+  if ('л'.includes(prev)) return 'ie'
+  return 'e'
+}
+
 function toLatinPhonetic(text: string, profile: Exclude<VoiceProfile, 'kk' | 'ru'>): string {
   if (profile === 'fr') {
     const exact = lookupFr(text)
@@ -184,12 +192,20 @@ function toLatinPhonetic(text: string, profile: Exclude<VoiceProfile, 'kk' | 'ru
   const map = { ...LATIN_BASE, ...special }
   const source = toCyrillicish(text)
   let out = ''
+  let prev: string | undefined
   for (const ch of source) {
     if (ch === ' ' || ch === '-' || ch === '\'' || ch === '’') {
       out += ' '
+      prev = ' '
+      continue
+    }
+    if (profile === 'fr' && ch === 'е') {
+      out += frenchYe(prev)
+      prev = ch
       continue
     }
     out += map[ch] ?? ch
+    prev = ch
   }
   return out.replace(/\s+/g, ' ').trim()
 }
