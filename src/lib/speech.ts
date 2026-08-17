@@ -21,7 +21,7 @@ function lowerCyr(text: string): string {
 export function toRussianFriendly(text: string): string {
   return lowerCyr(text)
     .replace(/ң/g, 'нг')
-    .replace(/ә/g, 'э')
+    .replace(/ә/g, 'а')
     .replace(/ғ/g, 'гх')
     .replace(/қ/g, 'къ')
     .replace(/ө/g, 'оэ')
@@ -81,7 +81,7 @@ const LATIN_BASE: LatinMap = {
 
 const PROFILE_SPECIAL: Record<Exclude<VoiceProfile, 'kk' | 'ru'>, LatinMap> = {
   tr: {
-    ә: 'e',
+    ә: 'a',
     ғ: 'ğ',
     қ: 'k',
     ң: 'ng',
@@ -96,7 +96,7 @@ const PROFILE_SPECIAL: Record<Exclude<VoiceProfile, 'kk' | 'ru'>, LatinMap> = {
     у: 'u',
   },
   de: {
-    ә: 'ä',
+    ә: 'a',
     ғ: 'r',
     қ: 'k',
     ң: 'ng',
@@ -110,7 +110,7 @@ const PROFILE_SPECIAL: Record<Exclude<VoiceProfile, 'kk' | 'ru'>, LatinMap> = {
     у: 'u',
   },
   fr: {
-    ә: 'è',
+    ә: 'a',
     ғ: 'r',
     қ: 'k',
     ң: 'ng',
@@ -161,7 +161,25 @@ function toCyrillicish(text: string): string {
   return out
 }
 
+const FR_SAY: Record<string, string> = {
+  сәлем: 'saliem',
+  'сәлеметсіз бе': 'saliemet siz be',
+  сәлеметсіз: 'saliemet siz',
+}
+
+function lookupFr(text: string): string | undefined {
+  const key = lowerCyr(text)
+    .replace(/[!?.,;:…]+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return FR_SAY[key]
+}
+
 function toLatinPhonetic(text: string, profile: Exclude<VoiceProfile, 'kk' | 'ru'>): string {
+  if (profile === 'fr') {
+    const exact = lookupFr(text)
+    if (exact) return exact
+  }
   const special = PROFILE_SPECIAL[profile]
   const map = { ...LATIN_BASE, ...special }
   const source = toCyrillicish(text)
@@ -201,10 +219,10 @@ function scoreVoice(voice: SpeechSynthesisVoice): number {
   const name = voice.name.toLowerCase()
   let score = 0
   if (lang.startsWith('kk') || name.includes('kazakh')) score = 100
+  else if (lang.startsWith('fr')) score = 90
   else if (lang.startsWith('tr') || name.includes('turk')) score = 88
   else if (lang.startsWith('az')) score = 78
   else if (lang.startsWith('de')) score = 72
-  else if (lang.startsWith('fr')) score = 64
   else if (lang.startsWith('ru')) score = 52
   else if (lang.startsWith('en')) score = 28
   if (voice.localService) score += 3
