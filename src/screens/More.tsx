@@ -1,7 +1,38 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { words } from '../data/words'
+import { chooseVoice, voiceSummary } from '../lib/speech'
 import { useApp } from '../state'
 import { Screen } from '../ui'
+
+function VoiceLine() {
+  const [label, setLabel] = useState('chargement…')
+  const [frenchOnly, setFrenchOnly] = useState(false)
+  useEffect(() => {
+    if (!('speechSynthesis' in window)) {
+      setLabel('lecture indisponible')
+      return
+    }
+    const update = () => {
+      const voices = window.speechSynthesis.getVoices()
+      const { profile } = chooseVoice(voices)
+      setLabel(voiceSummary(voices))
+      setFrenchOnly(profile === 'fr' && voices.length > 0)
+    }
+    update()
+    window.speechSynthesis.addEventListener('voiceschanged', update)
+    const id = window.setTimeout(update, 800)
+    return () => {
+      window.speechSynthesis.removeEventListener('voiceschanged', update)
+      window.clearTimeout(id)
+    }
+  }, [])
+  return (
+    <p className="tiny">
+      Voix du bouton ♪ : <b>{label}</b>
+      {frenchOnly ? ' — pas de turc/allemand sur cet appareil, d’où le français.' : ''}
+    </p>
+  )
+}
 
 export function More() {
   const { go, progress, wipeProgress } = useApp()
@@ -75,9 +106,10 @@ export function More() {
           Tout reste sur cet appareil. Basculez Кирил / Latin en haut de l’accueil.
         </p>
         <p className="tiny">
-          Le bouton ♪ n’a souvent pas de vraie voix kazakhe. On réécrit alors қ ә ң ө ұ ү pour le turc, l’allemand ou
-          le français du téléphone (eu, u, ng, r parisien…). C’est une aide, pas un locuteur natif.
+          Le bouton ♪ n’a souvent pas de vraie voix kazakhe. On prend alors le turc, l’allemand, le français ou le
+          russe du téléphone, dans cet ordre.
         </p>
+        <VoiceLine />
         {!confirm ? (
           <button type="button" className="btn quiet" style={{ marginTop: 12 }} onClick={() => setConfirm(true)}>
             Réinitialiser la progression

@@ -283,8 +283,12 @@ export function toTtsText(text: string, profile: VoiceProfile): string {
   return toLatinPhonetic(trimmed, profile)
 }
 
+function langKey(lang: string): string {
+  return (lang || '').toLowerCase().replace('_', '-')
+}
+
 function profileOf(lang: string): VoiceProfile {
-  const l = lang.toLowerCase()
+  const l = langKey(lang)
   if (l.startsWith('kk')) return 'kk'
   if (l.startsWith('tr')) return 'tr'
   if (l.startsWith('az')) return 'tr'
@@ -298,23 +302,23 @@ function profileOf(lang: string): VoiceProfile {
 function profileOfVoice(voice: SpeechSynthesisVoice): VoiceProfile {
   const name = voice.name.toLowerCase()
   if (name.includes('kazakh')) return 'kk'
-  if (name.includes('turk')) return 'tr'
+  if (name.includes('turk') || name.includes('türk') || name.includes('yelda')) return 'tr'
   if (name.includes('german') || name.includes('deutsch')) return 'de'
   if (name.includes('french') || name.includes('français')) return 'fr'
-  if (name.includes('russian') || name.includes('russ')) return 'ru'
+  if (name.includes('russian') || /\bruss/.test(name)) return 'ru'
   return profileOf(voice.lang)
 }
 
 function scoreVoice(voice: SpeechSynthesisVoice): number {
-  const lang = voice.lang.toLowerCase()
+  const lang = langKey(voice.lang)
   const name = voice.name.toLowerCase()
   let score = 0
   if (lang.startsWith('kk') || name.includes('kazakh')) score = 100
-  else if (lang.startsWith('tr') || name.includes('turk')) score = 88
+  else if (lang.startsWith('tr') || name.includes('turk') || name.includes('türk') || name.includes('yelda')) score = 88
   else if (lang.startsWith('az')) score = 80
   else if (lang.startsWith('de') || name.includes('german') || name.includes('deutsch')) score = 72
   else if (lang.startsWith('fr') || name.includes('french') || name.includes('français')) score = 58
-  else if (lang.startsWith('ru') || name.includes('russian') || name.includes('russ')) score = 48
+  else if (lang.startsWith('ru') || /\bruss/.test(name)) score = 48
   else if (lang.startsWith('en')) score = 20
   if (voice.localService) score += 2
   return score
@@ -340,6 +344,12 @@ export function chooseVoice(voices: SpeechSynthesisVoice[]): {
   return { voice: best, profile: profileOfVoice(best) }
 }
 
+export function voiceSummary(voices: SpeechSynthesisVoice[]): string {
+  const { voice, profile } = chooseVoice(voices)
+  if (voice) return `${voice.name} · ${voice.lang}`
+  return `aucune voix chargée (repli ${profile})`
+}
+
 function makeUtterance(
   text: string,
   voice: SpeechSynthesisVoice | null,
@@ -347,51 +357,76 @@ function makeUtterance(
   rate: number,
 ): SpeechSynthesisUtterance {
   const utter = new SpeechSynthesisUtterance(text)
-  if (voice) utter.voice = voice
-  utter.lang = lang
+  utter.voice = voice
+  utter.lang = voice?.lang || lang
   utter.rate = rate
   utter.pitch = 1
   return utter
 }
 
+function waitForVoices(synth: SpeechSynthesis, done: (voices: SpeechSynthesisVoice[]) => void): void {
+  const now = synth.getVoices()
+  if (now.length > 0) {
+    done(now)
+    return
+  }
+  let settled = false
+  const finish = () => {
+    if (settled) return
+    settled = true
+    synth.removeEventListener('voiceschanged', onChange)
+    done(synth.getVoices())
+  }
+  const onChange = () => finish()
+  synth.addEventListener('voiceschanged', onChange)
+  window.setTimeout(finish, 700)
+}
+
+function speakQueue(synth: SpeechSynthesis, items: SpeechSynthesisUtterance[]): void {
+  let i = 0
+  const play = () => {
+    if (i >= items.length) return
+    const u = items[i]
+    i += 1
+    u.onend = () => window.setTimeout(play, 80)
+    u.onerror = () => window.setTimeout(play, 80)
+    synth.speak(u)
+  }
+  synth.cancel()
+  window.setTimeout(play, 60)
+}
+
 export function speakKazakh(text: string): void {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
   const synth = window.speechSynthesis
-  synth.cancel()
   const raw = text.trim()
   if (!raw) return
+  synth.cancel()
 
-  const voices = synth.getVoices()
-  const { voice, profile } = chooseVoice(voices)
-  const spoken = toTtsText(raw, profile)
-  const spokenLang = voice?.lang ?? fallbackLang(profile)
-  const rate = profile === 'kk' ? 0.86 : 0.76
-  const frVoice = voices.find((v) => v.lang.toLowerCase().startsWith('fr')) ?? null
+  waitForVoices(synth, (voices) => {
+    const { voice, profile } = chooseVoice(voices)
+    const spoken = toTtsText(raw, profile)
+    const spokenLang = voice?.lang ?? fallbackLang(profile)
+    const rate = profile === 'kk' ? 0.86 : 0.76
+    const frVoice = voices.find((v) => langKey(v.lang).startsWith('fr')) ?? null
 
-  const letter = lowerCyr(raw)
-  const hint = letter.length === 1 ? spokenLetterHint(letter) : undefined
+    const letter = lowerCyr(raw)
+    const hint = letter.length === 1 ? spokenLetterHint(letter) : undefined
 
-  const queue: SpeechSynthesisUtterance[] = []
-  if (hint) {
-    queue.push(makeUtterance(hint, frVoice, frVoice?.lang ?? 'fr-FR', 0.95))
-  }
-  queue.push(makeUtterance(spoken || raw, voice, spokenLang, rate))
-
-  let i = 0
-  const play = () => {
-    if (i >= queue.length) return
-    const u = queue[i]
-    i += 1
-    u.onend = play
-    synth.speak(u)
-  }
-  play()
+    const queue: SpeechSynthesisUtterance[] = []
+    if (hint && frVoice) {
+      queue.push(makeUtterance(hint, frVoice, frVoice.lang, 0.95))
+    }
+    queue.push(makeUtterance(spoken || raw, voice, spokenLang, rate))
+    speakQueue(synth, queue)
+  })
 }
 
 export function preloadVoices(): void {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
-  window.speechSynthesis.getVoices()
-  window.speechSynthesis.addEventListener('voiceschanged', () => {
-    window.speechSynthesis.getVoices()
+  const synth = window.speechSynthesis
+  synth.getVoices()
+  synth.addEventListener('voiceschanged', () => {
+    synth.getVoices()
   })
 }
