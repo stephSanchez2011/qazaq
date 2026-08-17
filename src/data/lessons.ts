@@ -246,6 +246,34 @@ export const lessons: CourseLesson[] = [
     ],
     tip: 'Қанша тұрады ? — combien ça coûte ? À retenir avant le premier taxi à Almaty ou Astana.',
   },
+  {
+    id: 'l12',
+    title: 'Couleurs',
+    subtitle: 'Du ciel kazakh au feutre de yourte',
+    emoji: '🌈',
+    kind: 'words',
+    wordIds: ['qyzyl', 'kok', 'jasyl', 'sary', 'qara', 'aq', 'qonyr', 'sury', 'qyzgylt', 'qonur-alt'],
+    tip: 'Көк, c’est le bleu du drapeau — et parfois le « ciel » lui-même. Ақ (blanc) revient dans ақсақал, l’aîné respecté.',
+  },
+  {
+    id: 'l13',
+    title: 'Le temps qu’il fait',
+    subtitle: 'Steppe, neige, Nauryz',
+    emoji: '🌨️',
+    kind: 'words',
+    wordIds: ['aua', 'janbyr', 'qar', 'jel', 'bult', 'ashyq', 'jaz', 'qys', 'koktem', 'kuz', 'nauyz', 'muz'],
+    tip: 'Қыс est long et sec à Astana, жаз brûlant dans le sud. Наурыз marque le vrai début de l’année.',
+    culture: 'À Nauryz on prépare наурыз көже, une soupe aux sept ingrédients — symbole d’abondance.',
+  },
+  {
+    id: 'l14',
+    title: 'La maison',
+    subtitle: 'Yourte, porte, table',
+    emoji: '🏠',
+    kind: 'words',
+    wordIds: ['esik', 'tereze', 'ustel', 'oryndyq', 'tosek', 'asui', 'bolme', 'shyrak', 'kiizui', 'ui'],
+    tip: 'Үй veut dire maison et foyer. Киіз үй, la yourte, reste le symbole de l’hospitalité nomade.',
+  },
 ]
 
 export const lessonById: Record<string, CourseLesson> = Object.fromEntries(

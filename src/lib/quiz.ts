@@ -9,7 +9,7 @@ export type ChoiceQuestion = {
   word: Word
 }
 
-function shuffle<T>(items: T[]): T[] {
+export function shuffle<T>(items: T[]): T[] {
   const copy = [...items]
   for (let i = copy.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1))
@@ -20,7 +20,7 @@ function shuffle<T>(items: T[]): T[] {
   return copy
 }
 
-function uniqueOptions(correct: string, pool: string[], count: number): string[] {
+export function uniqueOptions(correct: string, pool: string[], count: number): string[] {
   const others = shuffle(pool.filter((x) => x !== correct)).slice(0, count - 1)
   return shuffle([correct, ...others])
 }
@@ -57,4 +57,28 @@ export function buildQuiz(
       word,
     }
   })
+}
+
+export function normalizeAnswer(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[.,!?;:«»"'`´]/g, '')
+    .replace(/\s+/g, ' ')
+}
+
+export function isKazakhMatch(input: string, word: Word): boolean {
+  const got = normalizeAnswer(input)
+  if (!got) return false
+  return got === normalizeAnswer(word.cyr) || got === normalizeAnswer(word.lat)
+}
+
+export type MatchRound = {
+  left: Word[]
+  right: Word[]
+}
+
+export function buildMatchRound(bank: Word[], size = 4): MatchRound {
+  const pick = shuffle(bank).slice(0, Math.min(size, bank.length))
+  return { left: shuffle(pick), right: shuffle(pick) }
 }

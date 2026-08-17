@@ -1,9 +1,9 @@
 import { lessons } from '../data/lessons'
 import { phrases } from '../data/phrases'
 import { words } from '../data/words'
-import { dueCardIds, knownCount } from '../lib/progress'
+import { dueCardIds, knownCount, todayStamp, wordOfDayIndex } from '../lib/progress'
 import { useApp } from '../state'
-import { ProgressBar, ScriptSwitch } from '../ui'
+import { Kk, ProgressBar, ScriptSwitch, Speak } from '../ui'
 
 function greeting(): { kk: string; fr: string } {
   const h = new Date().getHours()
@@ -18,6 +18,9 @@ export function Home() {
   const next = lessons.find((l) => !progress.completedLessons.includes(l.id)) ?? lessons[lessons.length - 1]!
   const due = dueCardIds(progress, words.map((w) => w.id)).length
   const pct = (progress.completedLessons.length / lessons.length) * 100
+  const daily = progress.dailyStamp === todayStamp() ? progress.dailyXp : 0
+  const goalPct = (daily / progress.dailyGoal) * 100
+  const wod = words[wordOfDayIndex(words.length)]!
 
   return (
     <>
@@ -47,6 +50,17 @@ export function Home() {
         </div>
       </header>
       <div className="screen" style={{ paddingTop: 16 }}>
+        <div className="card">
+          <span className="pill">objectif du jour</span>
+          <p style={{ margin: '8px 0 0' }}>
+            <b>
+              {daily} / {progress.dailyGoal} XP
+            </b>
+          </p>
+          <ProgressBar value={goalPct} />
+          <p className="tiny">{daily >= progress.dailyGoal ? 'Керемет — objectif atteint.' : 'Un atelier ou une leçon suffisent.'}</p>
+        </div>
+
         <button type="button" className="cta" onClick={() => go('lesson', { lessonId: next.id })}>
           <span className="emoji">{next.emoji}</span>
           <span className="grow">
@@ -58,10 +72,43 @@ export function Home() {
           </span>
         </button>
 
+        <div className="card wod">
+          <span className="pill">mot du jour</span>
+          <div className="brand" style={{ marginTop: 8 }}>
+            <div>
+              <b className="kk" style={{ fontSize: 22 }}>
+                <Kk cyr={wod.cyr} lat={wod.lat} />
+              </b>
+              <div className="muted">{wod.fr}</div>
+            </div>
+            <Speak text={wod.cyr} />
+          </div>
+        </div>
+
         <div className="h-row">
           <h2>Raccourcis</h2>
         </div>
         <div className="grid-2">
+          <button type="button" className="tile" onClick={() => go('practice')}>
+            <span className="pill">atelier</span>
+            <b>S’entraîner</b>
+            <span>Écrire, relier, écouter</span>
+          </button>
+          <button type="button" className="tile" onClick={() => go('dictionary')}>
+            <span className="pill">mots</span>
+            <b>Lexique</b>
+            <span>{words.length} entrées</span>
+          </button>
+          <button type="button" className="tile" onClick={() => go('dialogues')}>
+            <span className="pill">scènes</span>
+            <b>Dialogues</b>
+            <span>Thé, bazar, hôtel</span>
+          </button>
+          <button type="button" className="tile" onClick={() => go('cards')}>
+            <span className="pill">mémoire</span>
+            <b>Flashcards</b>
+            <span>{due} cartes à revoir</span>
+          </button>
           <button type="button" className="tile" onClick={() => go('alphabet')}>
             <span className="pill">base</span>
             <b>Alphabet</b>
@@ -70,17 +117,7 @@ export function Home() {
           <button type="button" className="tile" onClick={() => go('phrases')}>
             <span className="pill">oral</span>
             <b>Phrases</b>
-            <span>{phrases.length} répliques utiles</span>
-          </button>
-          <button type="button" className="tile" onClick={() => go('cards')}>
-            <span className="pill">mémoire</span>
-            <b>Flashcards</b>
-            <span>{due} cartes à revoir</span>
-          </button>
-          <button type="button" className="tile" onClick={() => go('grammar')}>
-            <span className="pill">structure</span>
-            <b>Grammaire</b>
-            <span>cas, harmonie, politesse</span>
+            <span>{phrases.length} répliques</span>
           </button>
         </div>
       </div>

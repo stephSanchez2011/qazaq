@@ -11,7 +11,7 @@ export function Learn() {
         <h2>Parcours</h2>
       </div>
       <p className="muted" style={{ marginTop: 0 }}>
-        Onze leçons, du premier сәлем jusqu’au taxi. Chaque leçon débloque la suivante.
+        {lessons.length} leçons, du premier сәлем jusqu’à la yourte. Chaque leçon débloque la suivante.
       </p>
       <div className="stack">
         {lessons.map((lesson, i) => {

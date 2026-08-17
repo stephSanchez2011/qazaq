@@ -1,8 +1,11 @@
+import { useState } from 'react'
+import { words } from '../data/words'
 import { useApp } from '../state'
 import { Screen } from '../ui'
 
 export function More() {
-  const { go, progress } = useApp()
+  const { go, progress, wipeProgress } = useApp()
+  const [confirm, setConfirm] = useState(false)
 
   return (
     <Screen>
@@ -10,6 +13,34 @@ export function More() {
         <h2>Plus</h2>
       </div>
       <div className="stack">
+        <button type="button" className="list-row" onClick={() => go('dictionary')}>
+          <span className="badge">Aa</span>
+          <span className="grow">
+            <b>Lexique</b>
+            <span className="muted">{words.length} mots, recherche et thèmes</span>
+          </span>
+        </button>
+        <button type="button" className="list-row" onClick={() => go('dialogues')}>
+          <span className="badge">🎙</span>
+          <span className="grow">
+            <b>Dialogues</b>
+            <span className="muted">Se présenter, thé, bazar, chemin, hôtel</span>
+          </span>
+        </button>
+        <button type="button" className="list-row" onClick={() => go('practice')}>
+          <span className="badge">✎</span>
+          <span className="grow">
+            <b>Atelier</b>
+            <span className="muted">Écrire, associer, écouter</span>
+          </span>
+        </button>
+        <button type="button" className="list-row" onClick={() => go('quiz')}>
+          <span className="badge">?</span>
+          <span className="grow">
+            <b>Quiz classique</b>
+            <span className="muted">Meilleur score {progress.quizBest}/10</span>
+          </span>
+        </button>
         <button type="button" className="list-row" onClick={() => go('alphabet')}>
           <span className="badge">АӘ</span>
           <span className="grow">
@@ -21,7 +52,7 @@ export function More() {
           <span className="badge">💬</span>
           <span className="grow">
             <b>Phrases du voyageur</b>
-            <span className="muted">Café, taxi, marché, politesse</span>
+            <span className="muted">Café, taxi, santé, météo</span>
           </span>
         </button>
         <button type="button" className="list-row" onClick={() => go('grammar')}>
@@ -41,13 +72,25 @@ export function More() {
           {progress.quizBest}/10
         </p>
         <p className="tiny">
-          Tout reste sur cet appareil. Basculez Кирил / Latin en haut de l’accueil : le Kazakhstan utilise encore le
-          cyrillique au quotidien, tout en passant au latin.
+          Tout reste sur cet appareil. Basculez Кирил / Latin en haut de l’accueil.
         </p>
         <p className="tiny">
-          Le bouton ♪ utilise la synthèse vocale du téléphone. S’il n’a pas de voix kazakhe, il se rabat sur le russe —
-          proche, pas parfait.
+          Le bouton ♪ utilise la synthèse vocale du téléphone. S’il n’a pas de voix kazakhe, il se rabat sur le russe.
         </p>
+        {!confirm ? (
+          <button type="button" className="btn quiet" style={{ marginTop: 12 }} onClick={() => setConfirm(true)}>
+            Réinitialiser la progression
+          </button>
+        ) : (
+          <div className="row-actions">
+            <button type="button" className="btn bad" onClick={() => { wipeProgress(); setConfirm(false) }}>
+              Effacer tout
+            </button>
+            <button type="button" className="btn quiet" onClick={() => setConfirm(false)}>
+              Annuler
+            </button>
+          </div>
+        )}
       </div>
     </Screen>
   )

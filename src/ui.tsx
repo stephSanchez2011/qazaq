@@ -23,6 +23,32 @@ export function Speak({ text }: { text: string }) {
   )
 }
 
+const CYR_KEYS = ['ә', 'і', 'ң', 'ғ', 'ү', 'ұ', 'қ', 'ө', 'һ']
+const LAT_KEYS = ['ä', 'ğ', 'ñ', 'ö', 'ü', 'ū', 'ş', 'ı']
+
+export function ExtraKeys({
+  onType,
+  onBackspace,
+}: {
+  onType: (ch: string) => void
+  onBackspace: () => void
+}) {
+  const { progress } = useApp()
+  const keys = progress.script === 'cyr' ? CYR_KEYS : LAT_KEYS
+  return (
+    <div className="keys">
+      {keys.map((k) => (
+        <button key={k} type="button" className="key" onClick={() => onType(k)}>
+          {k}
+        </button>
+      ))}
+      <button type="button" className="key wide" onClick={onBackspace} aria-label="Effacer">
+        ⌫
+      </button>
+    </div>
+  )
+}
+
 export function Back({ onClick }: { onClick: () => void }) {
   return (
     <button type="button" className="back" onClick={onClick} aria-label="Retour">

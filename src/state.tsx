@@ -4,6 +4,7 @@ import {
   completeLesson,
   defaultProgress,
   loadProgress,
+  resetProgress,
   reviewCard,
   saveProgress,
   type Progress,
@@ -21,6 +22,9 @@ export type Route =
   | 'phrases'
   | 'grammar'
   | 'more'
+  | 'dictionary'
+  | 'practice'
+  | 'dialogues'
 
 type AppState = {
   progress: Progress
@@ -33,6 +37,7 @@ type AppState = {
   finishLesson: (id: string) => void
   gradeCard: (wordId: string, ok: boolean) => void
   setQuizBest: (score: number) => void
+  wipeProgress: () => void
 }
 
 const Ctx = createContext<AppState | null>(null)
@@ -72,6 +77,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       gradeCard: (wordId, ok) => setProgress((p) => reviewCard(p, wordId, ok)),
       setQuizBest: (score) =>
         setProgress((p) => ({ ...p, quizBest: Math.max(p.quizBest, score) })),
+      wipeProgress: () => setProgress((p) => resetProgress(p.script)),
     }),
     [progress, route, lessonId, grammarId],
   )

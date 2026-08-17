@@ -19,6 +19,9 @@ export type Progress = {
   cards: Record<string, CardState>
   script: Script
   quizBest: number
+  dailyXp: number
+  dailyStamp: string | null
+  dailyGoal: number
 }
 
 const BOX_DAYS: Record<CardBox, number> = {
@@ -42,6 +45,9 @@ export function defaultProgress(): Progress {
     cards: {},
     script: 'cyr',
     quizBest: 0,
+    dailyXp: 0,
+    dailyStamp: null,
+    dailyGoal: 40,
   }
 }
 
@@ -71,7 +77,20 @@ export function markPracticed(p: Progress): Progress {
 }
 
 export function addXp(p: Progress, amount: number): Progress {
-  return markPracticed({ ...p, xp: p.xp + amount })
+  const today = todayStamp()
+  const dailyXp = p.dailyStamp === today ? p.dailyXp + amount : amount
+  return markPracticed({ ...p, xp: p.xp + amount, dailyXp, dailyStamp: today })
+}
+
+export function resetProgress(script: Script): Progress {
+  return { ...defaultProgress(), script }
+}
+
+export function wordOfDayIndex(length: number): number {
+  const stamp = todayStamp()
+  let hash = 0
+  for (const ch of stamp) hash = (hash * 33 + ch.charCodeAt(0)) >>> 0
+  return length === 0 ? 0 : hash % length
 }
 
 export function completeLesson(p: Progress, id: string): Progress {

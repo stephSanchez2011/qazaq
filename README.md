@@ -13,12 +13,14 @@ Ouvrez l’URL affichée (souvent `http://localhost:5173`).
 
 ## Contenu
 
-- 11 leçons guidées
-- ~150 mots
-- 30 phrases
+- 14 leçons guidées
+- Lexique searchable
+- Atelier : écrire (clavier әғқңөүұ), associer, écouter
+- Dialogues (thé, bazar, hôtel…)
+- ~200 mots, 40 phrases
 - Alphabet (42 lettres)
 - 8 fiches de grammaire
-- Progression et série enregistrées dans le navigateur
+- Progression, série et objectif du jour dans le navigateur
 
 ## Build
 

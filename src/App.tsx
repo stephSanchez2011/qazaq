@@ -8,18 +8,24 @@ import { Quiz } from './screens/Quiz'
 import { Phrases } from './screens/Phrases'
 import { Grammar } from './screens/Grammar'
 import { More } from './screens/More'
+import { Dictionary } from './screens/Dictionary'
+import { Practice } from './screens/Practice'
+import { Dialogues } from './screens/Dialogues'
 
 const NAV: { id: Route; label: string; ico: string }[] = [
   { id: 'home', label: 'Accueil', ico: '🏔' },
   { id: 'learn', label: 'Cours', ico: '📖' },
+  { id: 'practice', label: 'Atelier', ico: '✎' },
   { id: 'cards', label: 'Cartes', ico: '🃏' },
-  { id: 'quiz', label: 'Quiz', ico: '?' },
   { id: 'more', label: 'Plus', ico: '✦' },
 ]
 
+const MORE_ROUTES: Route[] = ['alphabet', 'phrases', 'grammar', 'dictionary', 'dialogues']
+
 function Shell() {
   const { route, go, lessonId } = useApp()
-  const tab = route === 'lesson' ? 'learn' : route === 'alphabet' || route === 'phrases' || route === 'grammar' ? 'more' : route
+  const tab =
+    route === 'lesson' ? 'learn' : MORE_ROUTES.includes(route) ? 'more' : route === 'quiz' ? 'practice' : route
 
   return (
     <div className="stage">
@@ -29,8 +35,11 @@ function Shell() {
       {route === 'alphabet' && <Alphabet />}
       {route === 'cards' && <Cards />}
       {route === 'quiz' && <Quiz />}
+      {route === 'practice' && <Practice />}
       {route === 'phrases' && <Phrases />}
       {route === 'grammar' && <Grammar />}
+      {route === 'dictionary' && <Dictionary />}
+      {route === 'dialogues' && <Dialogues />}
       {route === 'more' && <More />}
       <nav className="nav">
         {NAV.map((item) => (

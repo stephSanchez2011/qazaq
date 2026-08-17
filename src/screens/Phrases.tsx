@@ -10,6 +10,8 @@ const LABELS: Record<string, string> = {
   marché: 'Au marché',
   table: 'À table',
   hôtel: 'Hôtel',
+  météo: 'Météo',
+  santé: 'Santé',
 }
 
 export function Phrases() {
