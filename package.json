@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "build:pages": "tsc -b && VITE_PAGES=true vite build --outDir docs",
+    "build:pages": "tsc -b && VITE_PAGES=true vite build --outDir docs && cp docs/index.html docs/404.html && touch docs/.nojekyll",
     "lint": "oxlint",
     "preview": "vite preview"
   },
