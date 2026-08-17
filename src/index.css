@@ -386,6 +386,15 @@ button {
 .grow {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.grow b,
+.grow .muted {
+  display: block;
+  line-height: 1.3;
 }
 
 .muted {
