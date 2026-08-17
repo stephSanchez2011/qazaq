@@ -1,3 +1,5 @@
+import { alphabet } from '../data/alphabet'
+
 export type VoiceProfile = 'kk' | 'tr' | 'de' | 'fr' | 'ru' | 'en'
 
 const LETTER_HINT_FR: Record<string, string> = {
@@ -96,7 +98,7 @@ const PROFILE_SPECIAL: Record<Exclude<VoiceProfile, 'kk' | 'ru'>, LatinMap> = {
     у: 'u',
   },
   de: {
-    ә: 'a',
+    ә: 'ä',
     ғ: 'r',
     қ: 'k',
     ң: 'ng',
@@ -204,13 +206,34 @@ const FR_SAY: Record<string, string> = {
   myñ: 'meung',
 }
 
+function tidyKey(text: string): string {
+  return text
+    .replace(/[!?.,;:…]+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 function lookupFr(text: string): string | undefined {
-  const tidy = (value: string) =>
-    value
-      .replace(/[!?.,;:…]+/g, '')
-      .replace(/\s+/g, ' ')
-      .trim()
-  return FR_SAY[tidy(toCyrillicish(text))] ?? FR_SAY[tidy(lowerCyr(text))]
+  return FR_SAY[tidyKey(toCyrillicish(text))] ?? FR_SAY[tidyKey(lowerCyr(text))]
+}
+
+/** Turkish TTS otherwise turns Kazakh екі into iki (Turkish « 2 »). */
+const TR_SAY: Record<string, string> = {
+  екі: 'eki',
+  eki: 'eki',
+  сәлем: 'salem',
+  sälem: 'salem',
+}
+
+function lookupTr(text: string): string | undefined {
+  return TR_SAY[tidyKey(toCyrillicish(text))] ?? TR_SAY[tidyKey(lowerCyr(text))]
+}
+
+function spokenLetterHint(ch: string): string | undefined {
+  const key = lowerCyr(ch)
+  if (LETTER_HINT_FR[key]) return LETTER_HINT_FR[key]
+  const row = alphabet.find((l) => lowerCyr(l.cyr) === key)
+  return row?.hint
 }
 
 const KK_VOWELS = 'аәеёийоөуұүыіэюя'
@@ -224,6 +247,10 @@ function frenchYe(prev: string | undefined): string {
 function toLatinPhonetic(text: string, profile: Exclude<VoiceProfile, 'kk' | 'ru'>): string {
   if (profile === 'fr') {
     const exact = lookupFr(text)
+    if (exact) return exact
+  }
+  if (profile === 'tr') {
+    const exact = lookupTr(text)
     if (exact) return exact
   }
   const special = PROFILE_SPECIAL[profile]
@@ -268,30 +295,49 @@ function profileOf(lang: string): VoiceProfile {
   return 'fr'
 }
 
+function profileOfVoice(voice: SpeechSynthesisVoice): VoiceProfile {
+  const name = voice.name.toLowerCase()
+  if (name.includes('kazakh')) return 'kk'
+  if (name.includes('turk')) return 'tr'
+  if (name.includes('german') || name.includes('deutsch')) return 'de'
+  if (name.includes('french') || name.includes('français')) return 'fr'
+  if (name.includes('russian') || name.includes('russ')) return 'ru'
+  return profileOf(voice.lang)
+}
+
 function scoreVoice(voice: SpeechSynthesisVoice): number {
   const lang = voice.lang.toLowerCase()
   const name = voice.name.toLowerCase()
   let score = 0
   if (lang.startsWith('kk') || name.includes('kazakh')) score = 100
-  else if (lang.startsWith('fr')) score = 92
-  else if (lang.startsWith('de')) score = 60
-  else if (lang.startsWith('ru')) score = 48
-  else if (lang.startsWith('tr') || name.includes('turk')) score = 35
-  else if (lang.startsWith('az')) score = 32
-  else if (lang.startsWith('en')) score = 15
+  else if (lang.startsWith('tr') || name.includes('turk')) score = 88
+  else if (lang.startsWith('az')) score = 80
+  else if (lang.startsWith('de') || name.includes('german') || name.includes('deutsch')) score = 72
+  else if (lang.startsWith('fr') || name.includes('french') || name.includes('français')) score = 58
+  else if (lang.startsWith('ru') || name.includes('russian') || name.includes('russ')) score = 48
+  else if (lang.startsWith('en')) score = 20
   if (voice.localService) score += 2
   return score
+}
+
+function fallbackLang(profile: VoiceProfile): string {
+  if (profile === 'kk') return 'kk-KZ'
+  if (profile === 'tr') return 'tr-TR'
+  if (profile === 'de') return 'de-DE'
+  if (profile === 'ru') return 'ru-RU'
+  if (profile === 'en') return 'en-US'
+  return 'fr-FR'
 }
 
 export function chooseVoice(voices: SpeechSynthesisVoice[]): {
   voice: SpeechSynthesisVoice | null
   profile: VoiceProfile
 } {
-  if (voices.length === 0) return { voice: null, profile: 'fr' }
+  if (voices.length === 0) return { voice: null, profile: 'tr' }
   const ranked = [...voices].sort((a, b) => scoreVoice(b) - scoreVoice(a))
   const best = ranked[0]
-  if (!best || scoreVoice(best) === 0) return { voice: null, profile: 'fr' }
-  return { voice: best, profile: profileOf(best.lang) }
+  if (!best || scoreVoice(best) === 0) return { voice: null, profile: 'tr' }
+  return { voice: best, profile: profileOfVoice(best) }
 }
 
 function makeUtterance(
@@ -317,21 +363,19 @@ export function speakKazakh(text: string): void {
 
   const voices = synth.getVoices()
   const { voice, profile } = chooseVoice(voices)
+  const spoken = toTtsText(raw, profile)
+  const spokenLang = voice?.lang ?? fallbackLang(profile)
+  const rate = profile === 'kk' ? 0.86 : 0.76
   const frVoice = voices.find((v) => v.lang.toLowerCase().startsWith('fr')) ?? null
-  const useKazakh = profile === 'kk'
-  const spokenVoice = useKazakh ? voice : (frVoice ?? voice)
-  const spokenLang = useKazakh ? (voice?.lang ?? 'kk-KZ') : (frVoice?.lang ?? 'fr-FR')
-  const spoken = useKazakh ? raw : toTtsText(raw, 'fr')
-  const rate = useKazakh ? 0.86 : 0.72
 
   const letter = lowerCyr(raw)
-  const hint = letter.length === 1 ? LETTER_HINT_FR[letter] : undefined
+  const hint = letter.length === 1 ? spokenLetterHint(letter) : undefined
 
   const queue: SpeechSynthesisUtterance[] = []
-  if (hint && frVoice) {
-    queue.push(makeUtterance(hint, frVoice, frVoice.lang, 0.95))
+  if (hint) {
+    queue.push(makeUtterance(hint, frVoice, frVoice?.lang ?? 'fr-FR', 0.95))
   }
-  queue.push(makeUtterance(spoken || raw, spokenVoice, spokenLang, rate))
+  queue.push(makeUtterance(spoken || raw, voice, spokenLang, rate))
 
   let i = 0
   const play = () => {

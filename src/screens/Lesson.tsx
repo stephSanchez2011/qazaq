@@ -114,7 +114,7 @@ export function Lesson() {
             {' — '}
             {currentLetter.exampleFr}
           </p>
-          <Speak text={currentLetter.exampleCyr} />
+          <Speak text={currentLetter.cyr} />
           <ProgressBar value={((index + 1) / totalItems) * 100} />
           <div className="row-actions">
             <button type="button" className="btn primary" onClick={nextItem}>

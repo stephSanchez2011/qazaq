@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { alphabet } from '../data/alphabet'
 import { useApp } from '../state'
+import { speakKazakh } from '../lib/speech'
 import { Back, Screen, Speak } from '../ui'
 
 export function Alphabet() {
@@ -34,7 +35,10 @@ export function Alphabet() {
             key={l.cyr}
             type="button"
             className={`letter ${l.core ? 'core' : ''} ${l.cyr === sel ? 'on' : ''}`}
-            onClick={() => setSel(l.cyr)}
+            onClick={() => {
+              setSel(l.cyr)
+              speakKazakh(l.cyr)
+            }}
           >
             {progress.script === 'cyr' ? l.cyr : l.lat || l.cyr}
           </button>
@@ -43,7 +47,7 @@ export function Alphabet() {
       <div className="card detail">
         <div className="brand">
           <div className="big-letter">{progress.script === 'cyr' ? letter.cyr : letter.lat || letter.cyr}</div>
-          <Speak text={letter.exampleCyr} />
+          <Speak text={letter.cyr} />
         </div>
         <p className="ipa">/{letter.ipa || '—'}/ · {letter.name}</p>
         <p>{letter.hint}</p>
