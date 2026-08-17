@@ -28,3 +28,9 @@ Ouvrez l’URL affichée (souvent `http://localhost:5173`).
 npm run build
 npm run preview
 ```
+
+## GitHub Pages
+
+Le site : https://stephSanchez2011.github.io/qazaq/
+
+Dans le dépôt : **Settings → Pages → Source → GitHub Actions**. Un push sur `main` lance le build Vite puis le déploiement. Si l’action `deploy-pages` échoue en 503, c’est une panne GitHub Pages : relancez le workflow plus tard (onglet Actions).
