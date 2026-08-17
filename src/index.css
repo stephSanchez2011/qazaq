@@ -129,6 +129,22 @@ button {
   color: var(--sky-deep);
 }
 
+.card .script-switch {
+  background: rgba(8, 44, 60, 0.1);
+  width: fit-content;
+}
+
+.card .script-switch button {
+  color: var(--ink);
+  font-size: 13px;
+  padding: 8px 12px;
+}
+
+.card .script-switch button.on {
+  background: var(--sky-deep);
+  color: #fff;
+}
+
 .hello {
   margin: 22px 0 6px;
   font-family: var(--kk);

@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react'
 import { alphabet } from '../data/alphabet'
+import { frenchAlphabet } from '../data/frenchAlphabet'
 import { lessonById } from '../data/lessons'
 import { wordsById } from '../data/words'
+import { lessonSubtitle, lessonTitle } from '../lib/i18n'
 import { buildQuiz, type ChoiceQuestion } from '../lib/quiz'
-import { speakKazakh } from '../lib/speech'
+import { speakFrench, speakKazakh } from '../lib/speech'
 import { useApp } from '../state'
 import { Back, Kk, ProgressBar, Screen, Speak } from '../ui'
 import type { Word } from '../data/types'
@@ -11,7 +13,7 @@ import type { Word } from '../data/types'
 type Phase = 'intro' | 'item' | 'quiz' | 'done'
 
 export function Lesson() {
-  const { progress, lessonId, go, finishLesson } = useApp()
+  const { progress, lessonId, go, finishLesson, tr } = useApp()
   const lesson = lessonId ? lessonById[lessonId] : undefined
   const items: Word[] = useMemo(
     () => (lesson ? lesson.wordIds.map((id) => wordsById[id]).filter((w): w is Word => Boolean(w)) : []),
@@ -27,17 +29,19 @@ export function Lesson() {
   if (!lesson) {
     return (
       <Screen>
-        <p>Leçon introuvable.</p>
+        <p>{tr('lesson.missing')}</p>
       </Screen>
     )
   }
 
   const currentLesson = lesson
-  const coreLetters = alphabet.filter((l) => l.core)
-  const currentLetter = coreLetters[index]
+  const learnFr = progress.learn === 'fr'
+  const letters = learnFr ? frenchAlphabet.filter((l) => l.core) : alphabet.filter((l) => l.core)
+  const currentLetter = letters[index]
   const currentWord = items[index]
   const question = quiz[qIndex]
-  const totalItems = currentLesson.kind === 'alphabet' ? coreLetters.length : items.length
+  const totalItems = currentLesson.kind === 'alphabet' ? letters.length : items.length
+  const title = lessonTitle(progress.learn, currentLesson.id) ?? currentLesson.title
 
   function startItems() {
     setIndex(0)
@@ -82,18 +86,20 @@ export function Lesson() {
     <Screen>
       <div className="topbar">
         <Back onClick={() => go('learn')} />
-        <h2>{lesson.title}</h2>
+        <h2>{title}</h2>
       </div>
 
       {phase === 'intro' && (
         <div className="card">
           <div className="badge">{lesson.emoji}</div>
-          <h3 style={{ marginBottom: 6 }}>{lesson.subtitle}</h3>
-          <p className="muted">{lesson.tip}</p>
-          {lesson.culture && <p className="note">{lesson.culture}</p>}
+          <h3 style={{ marginBottom: 6 }}>{lessonSubtitle(progress.learn, lesson.id) ?? lesson.subtitle}</h3>
+          <p className="muted">
+            {lesson.id === 'l1' && learnFr ? tr('l1.tip.fr') : lesson.id === 'l1' ? tr('l1.tip.kk') : lesson.tip}
+          </p>
+          {lesson.culture && progress.learn === 'kk' && <p className="note">{lesson.culture}</p>}
           <div className="row-actions">
             <button type="button" className="btn primary" onClick={startItems}>
-              Commencer
+              {tr('lesson.start')}
             </button>
           </div>
         </div>
@@ -104,21 +110,33 @@ export function Lesson() {
           <span className="pill">
             {index + 1} / {totalItems}
           </span>
-          <div className="big-letter">{progress.script === 'cyr' ? currentLetter.cyr : currentLetter.lat}</div>
+          <div className="big-letter">
+            {learnFr ? currentLetter.lat : progress.script === 'cyr' ? currentLetter.cyr : currentLetter.lat}
+          </div>
           <p className="ipa">/{currentLetter.ipa || '—'}/</p>
           <p>{currentLetter.hint}</p>
           <p className="muted">
-            <span className="kk">
-              {progress.script === 'cyr' ? currentLetter.exampleCyr : currentLetter.exampleLat}
-            </span>
-            {' — '}
-            {currentLetter.exampleFr}
+            {learnFr ? (
+              <>
+                <b>{currentLetter.exampleFr}</b>
+                {' — '}
+                <span className="kk">{progress.script === 'cyr' ? currentLetter.exampleCyr : currentLetter.exampleLat}</span>
+              </>
+            ) : (
+              <>
+                <span className="kk">
+                  {progress.script === 'cyr' ? currentLetter.exampleCyr : currentLetter.exampleLat}
+                </span>
+                {' — '}
+                {currentLetter.exampleFr}
+              </>
+            )}
           </p>
-          <Speak text={currentLetter.cyr} />
+          <Speak text={learnFr ? currentLetter.exampleFr : currentLetter.cyr} lang={learnFr ? 'fr' : 'kk'} />
           <ProgressBar value={((index + 1) / totalItems) * 100} />
           <div className="row-actions">
             <button type="button" className="btn primary" onClick={nextItem}>
-              {index + 1 >= totalItems ? 'Terminer' : 'Lettre suivante'}
+              {index + 1 >= totalItems ? tr('lesson.finish') : tr('lesson.nextLetter')}
             </button>
           </div>
         </div>
@@ -129,17 +147,30 @@ export function Lesson() {
           <span className="pill">
             {index + 1} / {totalItems}
           </span>
-          <Kk cyr={currentWord.cyr} lat={currentWord.lat} />
-          <p className="ipa">/{currentWord.ipa}/</p>
-          <p className="fr">{currentWord.fr}</p>
-          {currentWord.note && <p className="note">{currentWord.note}</p>}
+          {learnFr ? (
+            <>
+              <p className="hello" style={{ color: 'var(--ink)' }}>
+                {currentWord.fr}
+              </p>
+              <p className="fr">
+                <Kk cyr={currentWord.cyr} lat={currentWord.lat} />
+              </p>
+            </>
+          ) : (
+            <>
+              <Kk cyr={currentWord.cyr} lat={currentWord.lat} />
+              <p className="ipa">/{currentWord.ipa}/</p>
+              <p className="fr">{currentWord.fr}</p>
+            </>
+          )}
+          {currentWord.note && progress.learn === 'kk' && <p className="note">{currentWord.note}</p>}
           <div style={{ marginTop: 12 }}>
-            <Speak text={currentWord.cyr} />
+            <Speak text={learnFr ? currentWord.fr : currentWord.cyr} />
           </div>
           <ProgressBar value={((index + 1) / totalItems) * 100} />
           <div className="row-actions">
             <button type="button" className="btn primary" onClick={nextItem}>
-              {index + 1 >= totalItems ? 'Quiz de la leçon' : 'Mot suivant'}
+              {index + 1 >= totalItems ? tr('lesson.quiz') : tr('lesson.nextWord')}
             </button>
           </div>
         </div>
@@ -150,7 +181,7 @@ export function Lesson() {
           <span className="pill">
             Quiz {qIndex + 1}/{quiz.length}
           </span>
-          <p className="prompt">{question.promptLang === 'kk' ? 'Que signifie' : 'Comment dit-on'}</p>
+          <p className="prompt">{question.promptLang === 'kk' ? tr('quiz.mean') : tr('quiz.say')}</p>
           <p className={`hello kk`} style={{ color: 'var(--ink)', fontSize: 28, margin: '8px 0 16px' }}>
             {question.prompt}
           </p>
@@ -159,7 +190,17 @@ export function Lesson() {
               type="button"
               className="speak ghost"
               onClick={() => speakKazakh(question.word.cyr)}
-              aria-label="Écouter"
+              aria-label={tr('listen')}
+            >
+              ♪
+            </button>
+          )}
+          {question.promptLang === 'fr' && (
+            <button
+              type="button"
+              className="speak ghost"
+              onClick={() => speakFrench(question.word.fr)}
+              aria-label={tr('listen')}
             >
               ♪
             </button>
@@ -181,7 +222,7 @@ export function Lesson() {
           {picked && (
             <div className="row-actions">
               <button type="button" className="btn primary" onClick={nextQuestion}>
-                {qIndex + 1 >= quiz.length ? 'Voir le score' : 'Continuer'}
+                {qIndex + 1 >= quiz.length ? tr('quiz.seeScore') : tr('continue')}
               </button>
             </div>
           )}
@@ -191,16 +232,16 @@ export function Lesson() {
       {phase === 'done' && (
         <div className="card center">
           <div className="big-letter">🎉</div>
-          <h3>Жарайсың! Bravo</h3>
+          <h3>{tr('lesson.done')}</h3>
           <p className="muted">
             {lesson.kind === 'words'
-              ? `Quiz : ${score}/${quiz.length} · leçon enregistrée`
-              : 'Alphabet parcouru. Revenez-y dès qu’une lettre résiste.'}
+              ? tr('lesson.done.words', { score, total: quiz.length })
+              : tr('lesson.done.alpha')}
           </p>
-          <p className="kk">Келесі сабаққа!</p>
+          <p className="kk">{tr('lesson.next')}</p>
           <div className="row-actions">
             <button type="button" className="btn primary" onClick={() => go('learn')}>
-              Retour au parcours
+              {tr('lesson.back')}
             </button>
           </div>
         </div>

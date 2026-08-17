@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import type { LearnTrack, Script } from './data/types'
 import {
   addXp,
   completeLesson,
@@ -9,8 +10,8 @@ import {
   saveProgress,
   type Progress,
 } from './lib/progress'
+import { t, type I18nKey } from './lib/i18n'
 import { preloadVoices } from './lib/speech'
-import type { Script } from './data/types'
 
 export type Route =
   | 'home'
@@ -33,11 +34,13 @@ type AppState = {
   grammarId: string | null
   go: (route: Route, extra?: { lessonId?: string; grammarId?: string }) => void
   setScript: (script: Script) => void
+  setLearn: (learn: LearnTrack) => void
   awardXp: (n: number) => void
   finishLesson: (id: string) => void
   gradeCard: (wordId: string, ok: boolean) => void
   setQuizBest: (score: number) => void
   wipeProgress: () => void
+  tr: (key: I18nKey, vars?: Record<string, string | number>) => string
 }
 
 const Ctx = createContext<AppState | null>(null)
@@ -59,6 +62,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     preloadVoices()
   }, [])
 
+  useEffect(() => {
+    document.documentElement.lang = progress.learn === 'fr' ? 'kk' : 'fr'
+  }, [progress.learn])
+
   const value = useMemo<AppState>(
     () => ({
       progress,
@@ -72,12 +79,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         window.scrollTo(0, 0)
       },
       setScript: (script) => setProgress((p) => ({ ...p, script })),
+      setLearn: (learn) => setProgress((p) => ({ ...p, learn })),
       awardXp: (n) => setProgress((p) => addXp(p, n)),
       finishLesson: (id) => setProgress((p) => completeLesson(p, id)),
       gradeCard: (wordId, ok) => setProgress((p) => reviewCard(p, wordId, ok)),
       setQuizBest: (score) =>
         setProgress((p) => ({ ...p, quizBest: Math.max(p.quizBest, score) })),
-      wipeProgress: () => setProgress((p) => resetProgress(p.script)),
+      wipeProgress: () => setProgress((p) => resetProgress(p.script, p.learn)),
+      tr: (key, vars) => t(progress.learn, key, vars),
     }),
     [progress, route, lessonId, grammarId],
   )

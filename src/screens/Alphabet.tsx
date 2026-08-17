@@ -1,32 +1,42 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { alphabet } from '../data/alphabet'
+import { frenchAlphabet } from '../data/frenchAlphabet'
+import { speakFrench, speakKazakh } from '../lib/speech'
 import { useApp } from '../state'
-import { speakKazakh } from '../lib/speech'
 import { Back, Screen, Speak } from '../ui'
 
 export function Alphabet() {
-  const { progress, go } = useApp()
+  const { progress, go, tr } = useApp()
+  const learnFr = progress.learn === 'fr'
+  const source = learnFr ? frenchAlphabet : alphabet
   const [onlyCore, setOnlyCore] = useState(true)
-  const [sel, setSel] = useState(alphabet.find((l) => l.core)?.cyr ?? 'А')
-  const letters = onlyCore ? alphabet.filter((l) => l.core) : alphabet
-  const letter = alphabet.find((l) => l.cyr === sel) ?? letters[0]!
+  const [sel, setSel] = useState(source.find((l) => l.core)?.cyr ?? source[0]!.cyr)
+  const letters = onlyCore ? source.filter((l) => l.core) : source
+  const letter = source.find((l) => l.cyr === sel) ?? letters[0]!
+
+  useEffect(() => {
+    setSel(source.find((l) => l.core)?.cyr ?? source[0]!.cyr)
+  }, [learnFr, source])
 
   return (
     <Screen>
       <div className="topbar">
         <Back onClick={() => go('more')} />
-        <h2>Alphabet</h2>
+        <h2>{tr('alpha.title')}</h2>
       </div>
       <p className="muted" style={{ marginTop: 0 }}>
-        Les lettres teintées sont celles du kazakh « de tous les jours ». Les autres apparaissent surtout dans les
-        emprunts.
+        {tr(learnFr ? 'alpha.intro.fr' : 'alpha.intro.kk')}
       </p>
       <div className="chips">
         <button type="button" className={`chip ${onlyCore ? 'on' : ''}`} onClick={() => setOnlyCore(true)}>
-          Essentielles
+          {tr('alpha.core')}
         </button>
-        <button type="button" className={`chip ${!onlyCore ? 'on' : ''}`} onClick={() => setOnlyCore(false)}>
-          42 lettres
+        <button
+          type="button"
+          className={`chip ${!onlyCore ? 'on' : ''}`}
+          onClick={() => setOnlyCore(false)}
+        >
+          {tr(learnFr ? 'alpha.all.fr' : 'alpha.all')}
         </button>
       </div>
       <div className="letter-grid">
@@ -37,23 +47,40 @@ export function Alphabet() {
             className={`letter ${l.core ? 'core' : ''} ${l.cyr === sel ? 'on' : ''}`}
             onClick={() => {
               setSel(l.cyr)
-              speakKazakh(l.cyr)
+              if (learnFr) speakFrench(l.exampleFr || l.lat)
+              else speakKazakh(l.cyr)
             }}
           >
-            {progress.script === 'cyr' ? l.cyr : l.lat || l.cyr}
+            {learnFr ? l.lat : progress.script === 'cyr' ? l.cyr : l.lat || l.cyr}
           </button>
         ))}
       </div>
       <div className="card detail">
         <div className="brand">
-          <div className="big-letter">{progress.script === 'cyr' ? letter.cyr : letter.lat || letter.cyr}</div>
-          <Speak text={letter.cyr} />
+          <div className="big-letter">
+            {learnFr ? letter.lat : progress.script === 'cyr' ? letter.cyr : letter.lat || letter.cyr}
+          </div>
+          <Speak text={learnFr ? letter.exampleFr || letter.lat : letter.cyr} lang={learnFr ? 'fr' : 'kk'} />
         </div>
-        <p className="ipa">/{letter.ipa || '—'}/ · {letter.name}</p>
+        <p className="ipa">
+          /{letter.ipa || '—'}/ · {letter.name}
+        </p>
         <p>{letter.hint}</p>
         <p className="ex">
-          <b className="kk">{progress.script === 'cyr' ? letter.exampleCyr : letter.exampleLat}</b>
-          <span className="muted"> — {letter.exampleFr}</span>
+          {learnFr ? (
+            <>
+              <b>{letter.exampleFr}</b>
+              <span className="muted">
+                {' '}
+                — {progress.script === 'cyr' ? letter.exampleCyr : letter.exampleLat}
+              </span>
+            </>
+          ) : (
+            <>
+              <b className="kk">{progress.script === 'cyr' ? letter.exampleCyr : letter.exampleLat}</b>
+              <span className="muted"> — {letter.exampleFr}</span>
+            </>
+          )}
         </p>
       </div>
     </Screen>

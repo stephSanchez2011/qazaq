@@ -422,6 +422,27 @@ export function speakKazakh(text: string): void {
   })
 }
 
+export function speakFrench(text: string): void {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
+  const synth = window.speechSynthesis
+  const raw = text.trim()
+  if (!raw) return
+  synth.cancel()
+
+  waitForVoices(synth, (voices) => {
+    const frVoice =
+      voices.find((v) => langKey(v.lang).startsWith('fr')) ??
+      voices.find((v) => v.name.toLowerCase().includes('french') || v.name.toLowerCase().includes('français')) ??
+      null
+    speakQueue(synth, [makeUtterance(raw, frVoice, frVoice?.lang ?? 'fr-FR', 0.92)])
+  })
+}
+
+export function speakTarget(text: string, learn: 'kk' | 'fr'): void {
+  if (learn === 'fr') speakFrench(text)
+  else speakKazakh(text)
+}
+
 export function preloadVoices(): void {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
   const synth = window.speechSynthesis

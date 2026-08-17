@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react'
 import { words } from '../data/words'
 import { buildQuiz, type ChoiceQuestion } from '../lib/quiz'
-import { speakKazakh } from '../lib/speech'
+import { speakFrench, speakKazakh } from '../lib/speech'
 import { useApp } from '../state'
 import { Screen } from '../ui'
 
 export function Quiz() {
-  const { progress, setQuizBest, awardXp } = useApp()
+  const { progress, setQuizBest, awardXp, tr } = useApp()
   const [quiz, setQuiz] = useState<ChoiceQuestion[] | null>(null)
   const [i, setI] = useState(0)
   const [picked, setPicked] = useState<string | null>(null)
@@ -29,14 +29,14 @@ export function Quiz() {
     return (
       <Screen>
         <div className="topbar">
-          <h2>Quiz</h2>
+          <h2>{tr('quiz.title')}</h2>
         </div>
         <div className="card">
-          <p>Dix questions mélangées, kazakh → français et l’inverse.</p>
-          <p className="muted">Meilleur score : {progress.quizBest}/10</p>
+          <p>{tr('quiz.intro')}</p>
+          <p className="muted">{tr('quiz.best', { n: progress.quizBest })}</p>
           <div className="row-actions">
             <button type="button" className="btn gold" onClick={start}>
-              Lancer un quiz
+              {tr('quiz.start')}
             </button>
           </div>
         </div>
@@ -51,10 +51,8 @@ export function Quiz() {
       <Screen>
         <div className="card center">
           <div className="big-letter">{pct >= 8 ? '🌟' : '💪'}</div>
-          <h3>
-            {score}/10
-          </h3>
-          <p className="muted">{score >= 8 ? 'Тамаша! Excellent.' : 'Жақсы. Encore une fois demain.'}</p>
+          <h3>{score}/10</h3>
+          <p className="muted">{score >= 8 ? tr('quiz.ok') : tr('quiz.again')}</p>
           <div className="row-actions">
             <button
               type="button"
@@ -65,7 +63,7 @@ export function Quiz() {
                 setQuiz(null)
               }}
             >
-              Terminer
+              {tr('lesson.finish')}
             </button>
           </div>
         </div>
@@ -82,18 +80,23 @@ export function Quiz() {
   return (
     <Screen>
       <div className="topbar">
-        <h2>Quiz</h2>
+        <h2>{tr('quiz.title')}</h2>
         <span className="muted">
           {i + 1}/10 · {score} pts
         </span>
       </div>
       <div className="card">
-        <p className="prompt">{q.promptLang === 'kk' ? 'Que signifie' : 'Comment dit-on'}</p>
+        <p className="prompt">{q.promptLang === 'kk' ? tr('quiz.mean') : tr('quiz.say')}</p>
         <p className="hello kk" style={{ color: 'var(--ink)', fontSize: 28, margin: '8px 0 16px' }}>
           {q.prompt}
         </p>
         {q.promptLang === 'kk' && (
           <button type="button" className="speak ghost" onClick={() => speakKazakh(q.word.cyr)}>
+            ♪
+          </button>
+        )}
+        {q.promptLang === 'fr' && (
+          <button type="button" className="speak ghost" onClick={() => speakFrench(q.word.fr)}>
             ♪
           </button>
         )}
@@ -114,7 +117,7 @@ export function Quiz() {
         {picked && (
           <div className="row-actions">
             <button type="button" className="btn primary" onClick={() => { setPicked(null); setI((n) => n + 1) }}>
-              Continuer
+              {tr('continue')}
             </button>
           </div>
         )}

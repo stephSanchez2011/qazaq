@@ -1,25 +1,26 @@
 import { useState } from 'react'
 import { dialogues } from '../data/dialogues'
-import { speakKazakh } from '../lib/speech'
+import { speakFrench, speakKazakh } from '../lib/speech'
 import { useApp } from '../state'
 import { Back, Kk, Screen, Speak } from '../ui'
 
 export function Dialogues() {
-  const { go, awardXp } = useApp()
+  const { go, awardXp, progress, tr } = useApp()
   const [id, setId] = useState<string | null>(null)
   const [line, setLine] = useState(0)
-  const [showFr, setShowFr] = useState(false)
+  const [showTr, setShowTr] = useState(false)
   const d = dialogues.find((x) => x.id === id)
+  const learnFr = progress.learn === 'fr'
 
   if (!d) {
     return (
       <Screen>
         <div className="topbar">
           <Back onClick={() => go('more')} />
-          <h2>Dialogues</h2>
+          <h2>{tr('dlg.title')}</h2>
         </div>
         <p className="muted" style={{ marginTop: 0 }}>
-          Cinq scènes à écouter réplique par réplique — comme si vous y étiez.
+          {tr('dlg.intro')}
         </p>
         <div className="stack">
           {dialogues.map((item) => (
@@ -30,7 +31,7 @@ export function Dialogues() {
               onClick={() => {
                 setId(item.id)
                 setLine(0)
-                setShowFr(false)
+                setShowTr(false)
               }}
             >
               <span className="badge">🎙</span>
@@ -52,7 +53,7 @@ export function Dialogues() {
     return (
       <Screen>
         <div className="card center">
-          <h3>Керемет! Scène finie</h3>
+          <h3>{tr('dlg.done')}</h3>
           <p className="muted">{d.title}</p>
           <div className="row-actions">
             <button
@@ -63,7 +64,7 @@ export function Dialogues() {
                 setId(null)
               }}
             >
-              Retour
+              {tr('back')}
             </button>
           </div>
         </div>
@@ -77,19 +78,21 @@ export function Dialogues() {
         <Back onClick={() => setId(null)} />
         <h2>{d.title}</h2>
       </div>
-      <p className="note">{d.hint}</p>
+      {progress.learn === 'kk' && <p className="note">{d.hint}</p>}
       <div className="card">
         <span className="pill">{current.who}</span>
         <p className="hello kk" style={{ color: 'var(--ink)', fontSize: 26, margin: '10px 0' }}>
-          <Kk cyr={current.cyr} lat={current.lat} />
+          {learnFr ? current.fr : <Kk cyr={current.cyr} lat={current.lat} />}
         </p>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <Speak text={current.cyr} />
-          <button type="button" className="linkish" onClick={() => setShowFr((v) => !v)}>
-            {showFr ? 'Masquer' : 'Traduction'}
+          <Speak text={learnFr ? current.fr : current.cyr} />
+          <button type="button" className="linkish" onClick={() => setShowTr((v) => !v)}>
+            {showTr ? tr('dlg.hide') : tr('dlg.tr')}
           </button>
         </div>
-        {showFr && <p className="muted">{current.fr}</p>}
+        {showTr && (
+          <p className="muted">{learnFr ? <Kk cyr={current.cyr} lat={current.lat} /> : current.fr}</p>
+        )}
       </div>
       <p className="tiny center">
         {line + 1} / {d.lines.length}
@@ -101,10 +104,10 @@ export function Dialogues() {
           disabled={line === 0}
           onClick={() => {
             setLine((n) => Math.max(0, n - 1))
-            setShowFr(false)
+            setShowTr(false)
           }}
         >
-          Précédent
+          {tr('dlg.prev')}
         </button>
         <button
           type="button"
@@ -114,12 +117,16 @@ export function Dialogues() {
               setLine(d.lines.length)
               return
             }
+            const next = d.lines[line + 1]
             setLine((n) => n + 1)
-            setShowFr(false)
-            speakKazakh(d.lines[line + 1]?.cyr ?? '')
+            setShowTr(false)
+            if (next) {
+              if (learnFr) speakFrench(next.fr)
+              else speakKazakh(next.cyr)
+            }
           }}
         >
-          {last ? 'Terminer' : 'Réplique suivante'}
+          {last ? tr('lesson.finish') : tr('dlg.next')}
         </button>
       </div>
     </Screen>

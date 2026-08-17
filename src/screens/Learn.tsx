@@ -1,17 +1,18 @@
 import { lessons } from '../data/lessons'
+import { lessonSubtitle, lessonTitle } from '../lib/i18n'
 import { useApp } from '../state'
 import { Screen } from '../ui'
 
 export function Learn() {
-  const { progress, go } = useApp()
+  const { progress, go, tr } = useApp()
 
   return (
     <Screen>
       <div className="topbar">
-        <h2>Parcours</h2>
+        <h2>{tr('learn.title')}</h2>
       </div>
       <p className="muted" style={{ marginTop: 0 }}>
-        {lessons.length} leçons, du premier сәлем jusqu’à la yourte. Chaque leçon débloque la suivante.
+        {tr(progress.learn === 'fr' ? 'learn.intro.fr' : 'learn.intro.kk', { n: lessons.length })}
       </p>
       <div className="stack">
         {lessons.map((lesson, i) => {
@@ -28,9 +29,11 @@ export function Learn() {
               <span className={`badge ${done ? 'done' : ''}`}>{done ? '✓' : lesson.emoji}</span>
               <span className="grow">
                 <b>
-                  {i + 1}. {lesson.title}
+                  {i + 1}. {lessonTitle(progress.learn, lesson.id) ?? lesson.title}
                 </b>
-                <span className="muted">{locked ? 'Terminez la leçon précédente' : lesson.subtitle}</span>
+                <span className="muted">
+                  {locked ? tr('learn.locked') : (lessonSubtitle(progress.learn, lesson.id) ?? lesson.subtitle)}
+                </span>
               </span>
             </button>
           )

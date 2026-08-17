@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { words } from '../data/words'
-import { buildMatchRound, isKazakhMatch, shuffle, uniqueOptions } from '../lib/quiz'
-import { speakKazakh } from '../lib/speech'
+import { buildMatchRound, isFrenchMatch, isKazakhMatch, shuffle, uniqueOptions } from '../lib/quiz'
+import { speakFrench, speakKazakh } from '../lib/speech'
 import { useApp } from '../state'
 import { ExtraKeys, Screen } from '../ui'
 import type { Word } from '../data/types'
@@ -15,9 +15,10 @@ function poolFor(progressCards: Record<string, unknown>): Word[] {
 }
 
 export function Practice() {
-  const { progress, awardXp, gradeCard } = useApp()
+  const { progress, awardXp, gradeCard, tr } = useApp()
   const [mode, setMode] = useState<Mode>('menu')
   const bank = useMemo(() => poolFor(progress.cards), [progress.cards])
+  const learnFr = progress.learn === 'fr'
 
   if (mode === 'type') return <TypeDrill bank={bank} onExit={() => setMode('menu')} awardXp={awardXp} gradeCard={gradeCard} />
   if (mode === 'match') return <MatchDrill bank={bank} onExit={() => setMode('menu')} awardXp={awardXp} />
@@ -35,31 +36,31 @@ export function Practice() {
   return (
     <Screen>
       <div className="topbar">
-        <h2>S’entraîner</h2>
+        <h2>{tr('practice.title')}</h2>
       </div>
       <p className="muted" style={{ marginTop: 0 }}>
-        Trois ateliers, plus actifs qu’un quiz : écrire, relier, écouter.
+        {tr('practice.intro')}
       </p>
       <div className="stack">
         <button type="button" className="list-row" onClick={() => setMode('type')}>
           <span className="badge">✎</span>
           <span className="grow">
-            <b>Écrire</b>
-            <span className="muted">Du français vers le kazakh, avec les lettres spéciales</span>
+            <b>{tr('practice.type')}</b>
+            <span className="muted">{tr(learnFr ? 'practice.type.sub.fr' : 'practice.type.sub.kk')}</span>
           </span>
         </button>
         <button type="button" className="list-row" onClick={() => setMode('match')}>
           <span className="badge">⚭</span>
           <span className="grow">
-            <b>Associer</b>
-            <span className="muted">Reliez quatre paires, trois manches</span>
+            <b>{tr('practice.match')}</b>
+            <span className="muted">{tr('practice.match.sub')}</span>
           </span>
         </button>
         <button type="button" className="list-row" onClick={() => setMode('listen')}>
           <span className="badge">♪</span>
           <span className="grow">
-            <b>Écouter</b>
-            <span className="muted">Entendez le mot, choisissez le français</span>
+            <b>{tr('practice.listen')}</b>
+            <span className="muted">{tr(learnFr ? 'practice.listen.sub.fr' : 'practice.listen.sub.kk')}</span>
           </span>
         </button>
       </div>
@@ -78,17 +79,18 @@ function TypeDrill({
   awardXp: (n: number) => void
   gradeCard: (id: string, ok: boolean) => void
 }) {
-  const { progress } = useApp()
+  const { progress, tr } = useApp()
   const [queue] = useState(() => [...bank].sort(() => Math.random() - 0.5).slice(0, 8))
   const [i, setI] = useState(0)
   const [typed, setTyped] = useState('')
   const [verdict, setVerdict] = useState<'ok' | 'no' | null>(null)
   const [score, setScore] = useState(0)
   const word = queue[i]
+  const learnFr = progress.learn === 'fr'
 
   function check() {
     if (!word || verdict) return
-    const ok = isKazakhMatch(typed, word)
+    const ok = learnFr ? isFrenchMatch(typed, word) : isKazakhMatch(typed, word)
     setVerdict(ok ? 'ok' : 'no')
     gradeCard(word.id, ok)
     if (ok) setScore((s) => s + 1)
@@ -102,7 +104,7 @@ function TypeDrill({
           <h3>
             {score}/{queue.length}
           </h3>
-          <p className="muted">Écriture kazakhe — ça vient avec la main.</p>
+          <p className="muted">{tr('practice.type.done')}</p>
           <div className="row-actions">
             <button
               type="button"
@@ -112,7 +114,7 @@ function TypeDrill({
                 onExit()
               }}
             >
-              Terminer
+              {tr('lesson.finish')}
             </button>
           </div>
         </div>
@@ -120,32 +122,42 @@ function TypeDrill({
     )
   }
 
-  const expected = progress.script === 'cyr' ? word.cyr : word.lat
+  const expected = learnFr ? word.fr : progress.script === 'cyr' ? word.cyr : word.lat
 
   return (
     <Screen>
       <div className="topbar">
-        <button type="button" className="back" onClick={onExit} aria-label="Retour">
+        <button type="button" className="back" onClick={onExit} aria-label={tr('back')}>
           ←
         </button>
-        <h2>Écrire</h2>
+        <h2>{tr('practice.type')}</h2>
         <span className="muted">
           {i + 1}/{queue.length}
         </span>
       </div>
       <div className="card">
-        <p className="prompt">Comment dit-on</p>
+        <p className="prompt">{tr('quiz.say')}</p>
         <p className="hello" style={{ color: 'var(--ink)', margin: '8px 0 14px' }}>
-          {word.fr}
+          {learnFr ? (
+            <span className="kk">{progress.script === 'cyr' ? word.cyr : word.lat}</span>
+          ) : (
+            word.fr
+          )}
         </p>
         <input
-          className="field kk"
+          className={`field ${learnFr ? '' : 'kk'}`}
           value={typed}
           onChange={(e) => setTyped(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') check()
           }}
-          placeholder={progress.script === 'cyr' ? 'en cyrillique…' : 'en latin…'}
+          placeholder={
+            learnFr
+              ? tr('practice.placeholder.fr')
+              : progress.script === 'cyr'
+                ? tr('practice.placeholder.kk')
+                : tr('practice.placeholder.lat')
+          }
           autoCapitalize="none"
           autoCorrect="off"
           spellCheck={false}
@@ -155,17 +167,17 @@ function TypeDrill({
           onType={(ch) => setTyped((t) => t + ch)}
           onBackspace={() => setTyped((t) => t.slice(0, -1))}
         />
-        {verdict === 'ok' && <p className="note">Дұрыс! Exact.</p>}
+        {verdict === 'ok' && <p className="note">{tr('practice.ok')}</p>}
         {verdict === 'no' && (
           <p className="note">
-            Réponse : <b className="kk">{expected}</b>
-            {progress.script === 'cyr' ? ` · ${word.lat}` : ` · ${word.cyr}`}
+            {tr('practice.answer')} : <b className={learnFr ? '' : 'kk'}>{expected}</b>
+            {!learnFr && (progress.script === 'cyr' ? ` · ${word.lat}` : ` · ${word.cyr}`)}
           </p>
         )}
         <div className="row-actions">
           {!verdict ? (
             <button type="button" className="btn primary" onClick={check}>
-              Vérifier
+              {tr('check')}
             </button>
           ) : (
             <button
@@ -177,7 +189,7 @@ function TypeDrill({
                 setI((n) => n + 1)
               }}
             >
-              Continuer
+              {tr('continue')}
             </button>
           )}
         </div>
@@ -195,7 +207,7 @@ function MatchDrill({
   onExit: () => void
   awardXp: (n: number) => void
 }) {
-  const { progress } = useApp()
+  const { progress, tr } = useApp()
   const [round, setRound] = useState(0)
   const [board, setBoard] = useState(() => buildMatchRound(bank, 4))
   const [picked, setPicked] = useState<string | null>(null)
@@ -230,8 +242,8 @@ function MatchDrill({
       <Screen>
         <div className="card center">
           <div className="big-letter">🔗</div>
-          <h3>{hits} paires</h3>
-          <p className="muted">Trois manches d’associations.</p>
+          <h3>{tr('practice.match.pairs', { n: hits })}</h3>
+          <p className="muted">{tr('practice.match.done')}</p>
           <div className="row-actions">
             <button
               type="button"
@@ -241,7 +253,7 @@ function MatchDrill({
                 onExit()
               }}
             >
-              Terminer
+              {tr('lesson.finish')}
             </button>
           </div>
         </div>
@@ -252,11 +264,11 @@ function MatchDrill({
   return (
     <Screen>
       <div className="topbar">
-        <button type="button" className="back" onClick={onExit} aria-label="Retour">
+        <button type="button" className="back" onClick={onExit} aria-label={tr('back')}>
           ←
         </button>
-        <h2>Associer</h2>
-        <span className="muted">manche {round + 1}/3</span>
+        <h2>{tr('practice.match')}</h2>
+        <span className="muted">{tr('practice.match.round', { n: round + 1 })}</span>
       </div>
       <div className="match">
         <div>
@@ -298,7 +310,7 @@ function MatchDrill({
               setPicked(null)
             }}
           >
-            Manche suivante
+            {tr('practice.match.next')}
           </button>
         </div>
       )}
@@ -317,13 +329,17 @@ function ListenDrill({
   onExit: () => void
   awardXp: (n: number) => void
 }) {
+  const { progress, tr } = useApp()
+  const learnFr = progress.learn === 'fr'
   const [quiz] = useState(() => {
     const pick = shuffle(bank).slice(0, 8)
+    const kkPool = words.map((w) => (script === 'cyr' ? w.cyr : w.lat))
     const frPool = words.map((w) => w.fr)
-    return pick.map((word) => ({
-      word,
-      options: uniqueOptions(word.fr, frPool, 4),
-    }))
+    return pick.map((word) => {
+      const answer = learnFr ? (script === 'cyr' ? word.cyr : word.lat) : word.fr
+      const pool = learnFr ? kkPool : frPool
+      return { word, answer, options: uniqueOptions(answer, pool, 4) }
+    })
   })
   const [i, setI] = useState(0)
   const [picked, setPicked] = useState<string | null>(null)
@@ -347,7 +363,7 @@ function ListenDrill({
                 onExit()
               }}
             >
-              Terminer
+              {tr('lesson.finish')}
             </button>
           </div>
         </div>
@@ -358,32 +374,37 @@ function ListenDrill({
   return (
     <Screen>
       <div className="topbar">
-        <button type="button" className="back" onClick={onExit} aria-label="Retour">
+        <button type="button" className="back" onClick={onExit} aria-label={tr('back')}>
           ←
         </button>
-        <h2>Écouter</h2>
+        <h2>{tr('practice.listen')}</h2>
         <span className="muted">
           {i + 1}/{quiz.length}
         </span>
       </div>
       <div className="card center">
-        <p className="prompt">Touchez, écoutez, choisissez</p>
-        <button type="button" className="speak" style={{ width: 72, height: 72, fontSize: 28 }} onClick={() => speakKazakh(q.word.cyr)}>
+        <p className="prompt">{tr('practice.listen.prompt')}</p>
+        <button
+          type="button"
+          className="speak"
+          style={{ width: 72, height: 72, fontSize: 28 }}
+          onClick={() => (learnFr ? speakFrench(q.word.fr) : speakKazakh(q.word.cyr))}
+        >
           ♪
         </button>
         {picked && (
           <p className="kk" style={{ fontSize: 22, fontWeight: 700 }}>
-            {script === 'cyr' ? q.word.cyr : q.word.lat}
+            {learnFr ? q.word.fr : script === 'cyr' ? q.word.cyr : q.word.lat}
           </p>
         )}
         <p className="tiny" style={{ marginTop: 10 }}>
-          La voix peut être approximative selon le téléphone.
+          {tr('practice.listen.hint')}
         </p>
         <div style={{ textAlign: 'left', marginTop: 16 }}>
           {q.options.map((opt) => {
             let cls = 'choice'
             if (picked) {
-              if (opt === q.word.fr) cls += ' right'
+              if (opt === q.answer) cls += ' right'
               else if (opt === picked) cls += ' wrong'
             }
             return (
@@ -394,7 +415,7 @@ function ListenDrill({
                 onClick={() => {
                   if (picked) return
                   setPicked(opt)
-                  if (opt === q.word.fr) setScore((s) => s + 1)
+                  if (opt === q.answer) setScore((s) => s + 1)
                 }}
               >
                 {opt}
@@ -412,7 +433,7 @@ function ListenDrill({
                 setI((n) => n + 1)
               }}
             >
-              Continuer
+              {tr('continue')}
             </button>
           </div>
         )}

@@ -1,5 +1,8 @@
 export type Script = 'cyr' | 'lat'
 
+/** Language the user is learning. UI is the other one. */
+export type LearnTrack = 'kk' | 'fr'
+
 export type Word = {
   id: string
   cyr: string

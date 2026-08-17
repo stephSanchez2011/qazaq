@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { words, wordsById } from '../data/words'
 import { dueCardIds } from '../lib/progress'
-import { speakKazakh } from '../lib/speech'
+import { speakFrench, speakKazakh } from '../lib/speech'
 import { useApp } from '../state'
 import { Kk, Screen } from '../ui'
 import type { Word } from '../data/types'
 
 export function Cards() {
-  const { progress, gradeCard } = useApp()
+  const { progress, gradeCard, tr } = useApp()
   const [queue] = useState(() => {
     const ids = dueCardIds(progress, words.map((w) => w.id)).slice(0, 20)
     return ids.map((id) => wordsById[id]).filter((w): w is Word => Boolean(w))
@@ -16,6 +16,7 @@ export function Cards() {
   const [flipped, setFlipped] = useState(false)
   const [done, setDone] = useState(0)
   const card = queue[i]
+  const learnFr = progress.learn === 'fr'
 
   function grade(ok: boolean) {
     if (!card) return
@@ -29,25 +30,21 @@ export function Cards() {
     return (
       <Screen>
         <div className="topbar">
-          <h2>Flashcards</h2>
+          <h2>{tr('cards.title')}</h2>
         </div>
         <div className="card empty">
-          <p>
-            {done > 0
-              ? `Session finie · ${done} cartes. Revenez demain pour la répétition.`
-              : 'Aucune carte due. Lancez une leçon pour alimenter le paquet.'}
-          </p>
+          <p>{done > 0 ? tr('cards.empty.done', { n: done }) : tr('cards.empty')}</p>
         </div>
       </Screen>
     )
   }
 
-  const frontFr = i % 2 === 0
+  const frontFr = learnFr ? i % 2 === 0 : i % 2 === 0
 
   return (
     <Screen>
       <div className="topbar">
-        <h2>Flashcards</h2>
+        <h2>{tr('cards.title')}</h2>
         <span className="muted">
           {i + 1}/{queue.length}
         </span>
@@ -63,11 +60,11 @@ export function Cards() {
         }}
         role="button"
         tabIndex={0}
-        aria-label="Retourner la carte"
+        aria-label={tr('cards.tap')}
       >
         {!flipped ? (
           <>
-            <span className="prompt">{frontFr ? 'Français' : 'Kazakh'}</span>
+            <span className="prompt">{frontFr ? tr('cards.fr') : tr('cards.kk')}</span>
             {frontFr ? (
               <p className="hello" style={{ color: 'var(--ink)' }}>
                 {card.fr}
@@ -77,11 +74,11 @@ export function Cards() {
                 {progress.script === 'cyr' ? card.cyr : card.lat}
               </p>
             )}
-            <p className="tiny">Touchez pour retourner</p>
+            <p className="tiny">{tr('cards.tap')}</p>
           </>
         ) : (
           <>
-            <span className="prompt">{frontFr ? 'Kazakh' : 'Français'}</span>
+            <span className="prompt">{frontFr ? tr('cards.kk') : tr('cards.fr')}</span>
             {frontFr ? (
               <>
                 <Kk cyr={card.cyr} lat={card.lat} className="hello" />
@@ -97,7 +94,8 @@ export function Cards() {
               className="speak"
               onClick={(e) => {
                 e.stopPropagation()
-                speakKazakh(card.cyr)
+                if (learnFr) speakFrench(card.fr)
+                else speakKazakh(card.cyr)
               }}
             >
               ♪
@@ -108,10 +106,10 @@ export function Cards() {
       {flipped && (
         <div className="row-actions">
           <button type="button" className="btn bad" onClick={() => grade(false)}>
-            À revoir
+            {tr('cards.again')}
           </button>
           <button type="button" className="btn ok" onClick={() => grade(true)}>
-            Je savais
+            {tr('cards.knew')}
           </button>
         </div>
       )}

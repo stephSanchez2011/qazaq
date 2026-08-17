@@ -73,6 +73,14 @@ export function isKazakhMatch(input: string, word: Word): boolean {
   return got === normalizeAnswer(word.cyr) || got === normalizeAnswer(word.lat)
 }
 
+export function isFrenchMatch(input: string, word: Word): boolean {
+  const got = normalizeAnswer(input)
+  if (!got) return false
+  const want = normalizeAnswer(word.fr)
+  const fold = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '')
+  return got === want || fold(got) === fold(want)
+}
+
 export type MatchRound = {
   left: Word[]
   right: Word[]

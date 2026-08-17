@@ -1,4 +1,4 @@
-import type { Script } from '../data/types'
+import type { LearnTrack, Script } from '../data/types'
 
 const KEY = 'qazaq-progress-v1'
 
@@ -18,6 +18,7 @@ export type Progress = {
   completedLessons: string[]
   cards: Record<string, CardState>
   script: Script
+  learn: LearnTrack
   quizBest: number
   dailyXp: number
   dailyStamp: string | null
@@ -44,6 +45,7 @@ export function defaultProgress(): Progress {
     completedLessons: [],
     cards: {},
     script: 'cyr',
+    learn: 'kk',
     quizBest: 0,
     dailyXp: 0,
     dailyStamp: null,
@@ -56,7 +58,8 @@ export function loadProgress(): Progress {
     const raw = localStorage.getItem(KEY)
     if (!raw) return defaultProgress()
     const parsed = JSON.parse(raw) as Partial<Progress>
-    return { ...defaultProgress(), ...parsed, cards: parsed.cards ?? {} }
+    const learn = parsed.learn === 'fr' ? 'fr' : 'kk'
+    return { ...defaultProgress(), ...parsed, learn, cards: parsed.cards ?? {} }
   } catch {
     return defaultProgress()
   }
@@ -82,8 +85,8 @@ export function addXp(p: Progress, amount: number): Progress {
   return markPracticed({ ...p, xp: p.xp + amount, dailyXp, dailyStamp: today })
 }
 
-export function resetProgress(script: Script): Progress {
-  return { ...defaultProgress(), script }
+export function resetProgress(script: Script, learn: LearnTrack = 'kk'): Progress {
+  return { ...defaultProgress(), script, learn }
 }
 
 export function wordOfDayIndex(length: number): number {

@@ -11,19 +11,20 @@ import { More } from './screens/More'
 import { Dictionary } from './screens/Dictionary'
 import { Practice } from './screens/Practice'
 import { Dialogues } from './screens/Dialogues'
+import type { I18nKey } from './lib/i18n'
 
-const NAV: { id: Route; label: string; ico: string }[] = [
-  { id: 'home', label: 'Accueil', ico: '🏔' },
-  { id: 'learn', label: 'Cours', ico: '📖' },
-  { id: 'practice', label: 'Atelier', ico: '✎' },
-  { id: 'cards', label: 'Cartes', ico: '🃏' },
-  { id: 'more', label: 'Plus', ico: '✦' },
+const NAV: { id: Route; label: I18nKey; ico: string }[] = [
+  { id: 'home', label: 'nav.home', ico: '🏔' },
+  { id: 'learn', label: 'nav.learn', ico: '📖' },
+  { id: 'practice', label: 'nav.practice', ico: '✎' },
+  { id: 'cards', label: 'nav.cards', ico: '🃏' },
+  { id: 'more', label: 'nav.more', ico: '✦' },
 ]
 
 const MORE_ROUTES: Route[] = ['alphabet', 'phrases', 'grammar', 'dictionary', 'dialogues']
 
 function Shell() {
-  const { route, go, lessonId } = useApp()
+  const { route, go, lessonId, tr } = useApp()
   const tab =
     route === 'lesson' ? 'learn' : MORE_ROUTES.includes(route) ? 'more' : route === 'quiz' ? 'practice' : route
 
@@ -50,7 +51,7 @@ function Shell() {
             onClick={() => go(item.id)}
           >
             <span className="ico">{item.ico}</span>
-            {item.label}
+            {tr(item.label)}
           </button>
         ))}
       </nav>
