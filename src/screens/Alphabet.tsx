@@ -39,6 +39,11 @@ export function Alphabet() {
           {tr(learnFr ? 'alpha.all.fr' : 'alpha.all')}
         </button>
       </div>
+      <div className="row-actions" style={{ margin: '4px 0 12px' }}>
+        <button type="button" className="btn primary" onClick={() => go('practice', { practiceMode: 'alpha' })}>
+          {tr('alpha.quiz.start')}
+        </button>
+      </div>
       <div className="letter-grid">
         {letters.map((l) => (
           <button

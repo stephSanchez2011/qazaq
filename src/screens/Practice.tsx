@@ -4,9 +4,10 @@ import { buildMatchRound, isFrenchMatch, isKazakhMatch, shuffle, uniqueOptions }
 import { speakFrench, speakKazakh } from '../lib/speech'
 import { useApp } from '../state'
 import { ExtraKeys, Screen } from '../ui'
+import { AlphabetQuizPlay } from './AlphabetQuiz'
 import type { Word } from '../data/types'
 
-type Mode = 'menu' | 'type' | 'match' | 'listen'
+type Mode = 'menu' | 'type' | 'match' | 'listen' | 'alpha'
 
 function poolFor(progressCards: Record<string, unknown>): Word[] {
   const seen = new Set(Object.keys(progressCards))
@@ -15,8 +16,8 @@ function poolFor(progressCards: Record<string, unknown>): Word[] {
 }
 
 export function Practice() {
-  const { progress, awardXp, gradeCard, tr } = useApp()
-  const [mode, setMode] = useState<Mode>('menu')
+  const { progress, awardXp, gradeCard, tr, practiceMode } = useApp()
+  const [mode, setMode] = useState<Mode>(practiceMode === 'alpha' ? 'alpha' : 'menu')
   const bank = useMemo(() => poolFor(progress.cards), [progress.cards])
   const learnFr = progress.learn === 'fr'
 
@@ -31,6 +32,9 @@ export function Practice() {
         awardXp={awardXp}
       />
     )
+  }
+  if (mode === 'alpha') {
+    return <AlphabetQuizPlay onExit={() => setMode('menu')} />
   }
 
   return (
@@ -61,6 +65,13 @@ export function Practice() {
           <span className="grow">
             <b>{tr('practice.listen')}</b>
             <span className="muted">{tr(learnFr ? 'practice.listen.sub.fr' : 'practice.listen.sub.kk')}</span>
+          </span>
+        </button>
+        <button type="button" className="list-row" onClick={() => setMode('alpha')}>
+          <span className="badge">Aa</span>
+          <span className="grow">
+            <b>{tr('practice.alpha')}</b>
+            <span className="muted">{tr(learnFr ? 'practice.alpha.sub.fr' : 'practice.alpha.sub.kk')}</span>
           </span>
         </button>
       </div>

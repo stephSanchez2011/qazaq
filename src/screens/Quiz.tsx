@@ -4,9 +4,11 @@ import { buildQuiz, type ChoiceQuestion } from '../lib/quiz'
 import { speakFrench, speakKazakh } from '../lib/speech'
 import { useApp } from '../state'
 import { Screen } from '../ui'
+import { AlphabetQuizPlay } from './AlphabetQuiz'
 
 export function Quiz() {
   const { progress, setQuizBest, awardXp, tr } = useApp()
+  const [kind, setKind] = useState<'vocab' | 'alpha' | null>(null)
   const [quiz, setQuiz] = useState<ChoiceQuestion[] | null>(null)
   const [i, setI] = useState(0)
   const [picked, setPicked] = useState<string | null>(null)
@@ -25,6 +27,10 @@ export function Quiz() {
     setScore(0)
   }
 
+  if (kind === 'alpha') {
+    return <AlphabetQuizPlay onExit={() => setKind(null)} />
+  }
+
   if (!quiz) {
     return (
       <Screen>
@@ -40,6 +46,13 @@ export function Quiz() {
             </button>
           </div>
         </div>
+        <button type="button" className="list-row" style={{ marginTop: 12 }} onClick={() => setKind('alpha')}>
+          <span className="badge">Aa</span>
+          <span className="grow">
+            <b>{tr('quiz.alpha')}</b>
+            <span className="muted">{tr('quiz.alpha.intro')}</span>
+          </span>
+        </button>
       </Screen>
     )
   }

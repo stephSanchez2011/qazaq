@@ -32,7 +32,8 @@ type AppState = {
   route: Route
   lessonId: string | null
   grammarId: string | null
-  go: (route: Route, extra?: { lessonId?: string; grammarId?: string }) => void
+  go: (route: Route, extra?: { lessonId?: string; grammarId?: string; practiceMode?: 'alpha' }) => void
+  practiceMode: 'alpha' | null
   setScript: (script: Script) => void
   setLearn: (learn: LearnTrack) => void
   awardXp: (n: number) => void
@@ -53,6 +54,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [route, setRoute] = useState<Route>('home')
   const [lessonId, setLessonId] = useState<string | null>(null)
   const [grammarId, setGrammarId] = useState<string | null>(null)
+  const [practiceMode, setPracticeMode] = useState<'alpha' | null>(null)
 
   useEffect(() => {
     saveProgress(progress)
@@ -72,10 +74,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       route,
       lessonId,
       grammarId,
+      practiceMode,
       go: (next, extra) => {
         setRoute(next)
         if (extra?.lessonId !== undefined) setLessonId(extra.lessonId)
         if (extra?.grammarId !== undefined) setGrammarId(extra.grammarId)
+        setPracticeMode(extra?.practiceMode ?? null)
         window.scrollTo(0, 0)
       },
       setScript: (script) => setProgress((p) => ({ ...p, script })),
@@ -88,7 +92,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       wipeProgress: () => setProgress((p) => resetProgress(p.script, p.learn)),
       tr: (key, vars) => t(progress.learn, key, vars),
     }),
-    [progress, route, lessonId, grammarId],
+    [progress, route, lessonId, grammarId, practiceMode],
   )
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

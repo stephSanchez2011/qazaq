@@ -559,6 +559,23 @@ button {
   border-color: var(--bad);
 }
 
+.choice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.choice-grid .choice {
+  text-align: center;
+  font-size: 26px;
+  min-height: 56px;
+  margin-top: 0;
+}
+
+.choice-grid .choice + .choice {
+  margin-top: 0;
+}
+
 .flash {
   width: 100%;
   min-height: 220px;

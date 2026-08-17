@@ -8,6 +8,7 @@ import { buildQuiz, type ChoiceQuestion } from '../lib/quiz'
 import { speakFrench, speakKazakh } from '../lib/speech'
 import { useApp } from '../state'
 import { Back, Kk, ProgressBar, Screen, Speak } from '../ui'
+import { AlphabetQuizPlay } from './AlphabetQuiz'
 import type { Word } from '../data/types'
 
 type Phase = 'intro' | 'item' | 'quiz' | 'done'
@@ -25,6 +26,7 @@ export function Lesson() {
   const [qIndex, setQIndex] = useState(0)
   const [picked, setPicked] = useState<string | null>(null)
   const [score, setScore] = useState(0)
+  const [alphaTotal, setAlphaTotal] = useState(0)
 
   if (!lesson) {
     return (
@@ -52,8 +54,9 @@ export function Lesson() {
     if (index + 1 >= totalItems) {
       const bank = currentLesson.kind === 'alphabet' ? [] : items
       if (currentLesson.kind === 'alphabet') {
-        finishLesson(currentLesson.id)
-        setPhase('done')
+        setScore(0)
+        setPicked(null)
+        setPhase('quiz')
         return
       }
       setQuiz(buildQuiz(bank, bank, progress.script, Math.min(8, bank.length)))
@@ -138,7 +141,7 @@ export function Lesson() {
           <ProgressBar value={((index + 1) / totalItems) * 100} />
           <div className="row-actions">
             <button type="button" className="btn primary" onClick={nextItem}>
-              {index + 1 >= totalItems ? tr('lesson.finish') : tr('lesson.nextLetter')}
+              {index + 1 >= totalItems ? tr('lesson.quiz') : tr('lesson.nextLetter')}
             </button>
           </div>
         </div>
@@ -178,7 +181,20 @@ export function Lesson() {
         </div>
       )}
 
-      {phase === 'quiz' && question && (
+      {phase === 'quiz' && lesson.kind === 'alphabet' && (
+        <AlphabetQuizPlay
+          embed
+          onExit={() => go('learn')}
+          onFinished={(s, total) => {
+            setScore(s)
+            setAlphaTotal(total)
+            finishLesson(currentLesson.id)
+            setPhase('done')
+          }}
+        />
+      )}
+
+      {phase === 'quiz' && lesson.kind === 'words' && question && (
         <div className="card">
           <span className="pill">
             Quiz {qIndex + 1}/{quiz.length}
@@ -238,7 +254,7 @@ export function Lesson() {
           <p className="muted">
             {lesson.kind === 'words'
               ? tr('lesson.done.words', { score, total: quiz.length })
-              : tr('lesson.done.alpha')}
+              : tr('lesson.done.alpha', { score, total: alphaTotal })}
           </p>
           <p className="kk">{tr('lesson.next')}</p>
           <div className="row-actions">
