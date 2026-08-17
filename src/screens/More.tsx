@@ -75,7 +75,8 @@ export function More() {
           Tout reste sur cet appareil. Basculez Кирил / Latin en haut de l’accueil.
         </p>
         <p className="tiny">
-          Le bouton ♪ utilise la synthèse vocale du téléphone. S’il n’a pas de voix kazakhe, il se rabat sur le russe.
+          Le bouton ♪ n’a souvent pas de vraie voix kazakhe. On réécrit alors қ ә ң ө ұ ү pour le turc, l’allemand ou
+          le français du téléphone (eu, u, ng, r parisien…). C’est une aide, pas un locuteur natif.
         </p>
         {!confirm ? (
           <button type="button" className="btn quiet" style={{ marginTop: 12 }} onClick={() => setConfirm(true)}>
