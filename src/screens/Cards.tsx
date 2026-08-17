@@ -53,7 +53,7 @@ export function Cards() {
         </span>
       </div>
       <div
-        className={`flip ${flipped ? 'on' : ''}`}
+        className={`flash ${flipped ? 'revealed' : ''}`}
         onClick={() => setFlipped((f) => !f)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -65,21 +65,22 @@ export function Cards() {
         tabIndex={0}
         aria-label="Retourner la carte"
       >
-        <div className="flip-inner">
-          <div className="face">
+        {!flipped ? (
+          <>
             <span className="prompt">{frontFr ? 'Français' : 'Kazakh'}</span>
             {frontFr ? (
-              <p className="hello" style={{ color: 'var(--ink)', margin: '12px 0 0' }}>
+              <p className="hello" style={{ color: 'var(--ink)' }}>
                 {card.fr}
               </p>
             ) : (
-              <p className="hello kk" style={{ color: 'var(--ink)', margin: '12px 0 0' }}>
+              <p className="hello kk" style={{ color: 'var(--ink)' }}>
                 {progress.script === 'cyr' ? card.cyr : card.lat}
               </p>
             )}
             <p className="tiny">Touchez pour retourner</p>
-          </div>
-          <div className="face back">
+          </>
+        ) : (
+          <>
             <span className="prompt">{frontFr ? 'Kazakh' : 'Français'}</span>
             {frontFr ? (
               <>
@@ -87,7 +88,7 @@ export function Cards() {
                 <p className="ipa">/{card.ipa}/</p>
               </>
             ) : (
-              <p className="hello" style={{ color: 'var(--ink)', margin: '12px 0 0' }}>
+              <p className="hello" style={{ color: 'var(--ink)' }}>
                 {card.fr}
               </p>
             )}
@@ -101,8 +102,8 @@ export function Cards() {
             >
               ♪
             </button>
-          </div>
-        </div>
+          </>
+        )}
       </div>
       {flipped && (
         <div className="row-actions">

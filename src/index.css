@@ -531,27 +531,9 @@ button {
   border-color: var(--bad);
 }
 
-.flip {
-  perspective: 1000px;
+.flash {
+  width: 100%;
   min-height: 220px;
-  cursor: pointer;
-}
-
-.flip-inner {
-  position: relative;
-  min-height: 220px;
-  transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
-  transform-style: preserve-3d;
-}
-
-.flip.on .flip-inner {
-  transform: rotateY(180deg);
-}
-
-.face {
-  position: absolute;
-  inset: 0;
-  backface-visibility: hidden;
   border-radius: 20px;
   border: 1px solid var(--line);
   background: var(--paper);
@@ -559,13 +541,20 @@ button {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  text-align: center;
   padding: 20px;
   box-shadow: var(--shadow);
+  box-sizing: border-box;
 }
 
-.face.back {
-  transform: rotateY(180deg);
+.flash.revealed {
   background: linear-gradient(180deg, #f8fbff, #fffaf3);
+}
+
+.flash .hello {
+  margin: 12px 0 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .prompt {
