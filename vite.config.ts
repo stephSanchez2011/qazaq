@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: process.env.GITHUB_ACTIONS ? '/qazaq/' : '/',
+  base: process.env.GITHUB_ACTIONS || process.env.VITE_PAGES === 'true' ? '/qazaq/' : '/',
   server: {
     host: true,
     port: 5173,

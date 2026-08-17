@@ -1,0 +1,16 @@
+{
+  "name": "Qazaq — apprendre le kazakh",
+  "short_name": "Qazaq",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#F6EFE3",
+  "theme_color": "#0B4F6C",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

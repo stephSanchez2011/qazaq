@@ -33,4 +33,11 @@ npm run preview
 
 Le site : https://stephSanchez2011.github.io/qazaq/
 
-Dans le dépôt : **Settings → Pages → Source → GitHub Actions**. Un push sur `main` lance le build Vite puis le déploiement. Si l’action `deploy-pages` échoue en 503, c’est une panne GitHub Pages : relancez le workflow plus tard (onglet Actions).
+GitHub Pages a des pannes sur l’action `deploy-pages` (erreur 503). On publie donc le site **déjà compilé** dans `/docs` :
+
+1. Dépôt → **Settings → Pages**
+2. Source : **Deploy from a branch** (pas GitHub Actions)
+3. Branch : `main` — dossier : `/docs`
+4. Save
+
+Puis ouvrez https://stephSanchez2011.github.io/qazaq/
