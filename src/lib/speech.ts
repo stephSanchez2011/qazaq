@@ -163,16 +163,54 @@ function toCyrillicish(text: string): string {
 
 const FR_SAY: Record<string, string> = {
   сәлем: 'saliem',
+  sälem: 'saliem',
   'сәлеметсіз бе': 'saliemet siz be',
   сәлеметсіз: 'saliemet siz',
+  нөл: 'neul',
+  nöl: 'neul',
+  бір: 'birre',
+  bir: 'birre',
+  екі: 'yéki',
+  eki: 'yéki',
+  үш: 'uich',
+  üş: 'uich',
+  төрт: 'teurt',
+  tört: 'teurt',
+  бес: 'besse',
+  bes: 'besse',
+  алты: 'alte',
+  alty: 'alte',
+  жеті: 'jéti',
+  jeti: 'jéti',
+  сегіз: 'séghiz',
+  segiz: 'séghiz',
+  тоғыз: 'togheuz',
+  toğyz: 'togheuz',
+  он: 'onne',
+  on: 'onne',
+  'он бір': 'onne birre',
+  'on bir': 'onne birre',
+  жиырма: 'jiyourma',
+  jiyrma: 'jiyourma',
+  отыз: 'otiz',
+  otyz: 'otiz',
+  қырық: 'keureuk',
+  qyryq: 'keureuk',
+  елу: 'yélou',
+  elu: 'yélou',
+  жүз: 'juz',
+  jüz: 'juz',
+  мың: 'meung',
+  myñ: 'meung',
 }
 
 function lookupFr(text: string): string | undefined {
-  const key = lowerCyr(text)
-    .replace(/[!?.,;:…]+/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-  return FR_SAY[key]
+  const tidy = (value: string) =>
+    value
+      .replace(/[!?.,;:…]+/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+  return FR_SAY[tidy(toCyrillicish(text))] ?? FR_SAY[tidy(lowerCyr(text))]
 }
 
 const KK_VOWELS = 'аәеёийоөуұүыіэюя'
@@ -235,13 +273,13 @@ function scoreVoice(voice: SpeechSynthesisVoice): number {
   const name = voice.name.toLowerCase()
   let score = 0
   if (lang.startsWith('kk') || name.includes('kazakh')) score = 100
-  else if (lang.startsWith('fr')) score = 90
-  else if (lang.startsWith('tr') || name.includes('turk')) score = 88
-  else if (lang.startsWith('az')) score = 78
-  else if (lang.startsWith('de')) score = 72
-  else if (lang.startsWith('ru')) score = 52
-  else if (lang.startsWith('en')) score = 28
-  if (voice.localService) score += 3
+  else if (lang.startsWith('fr')) score = 92
+  else if (lang.startsWith('de')) score = 60
+  else if (lang.startsWith('ru')) score = 48
+  else if (lang.startsWith('tr') || name.includes('turk')) score = 35
+  else if (lang.startsWith('az')) score = 32
+  else if (lang.startsWith('en')) score = 15
+  if (voice.localService) score += 2
   return score
 }
 
@@ -279,19 +317,21 @@ export function speakKazakh(text: string): void {
 
   const voices = synth.getVoices()
   const { voice, profile } = chooseVoice(voices)
-  const spoken = toTtsText(raw, profile)
-  const lang = voice?.lang ?? (profile === 'fr' ? 'fr-FR' : 'tr-TR')
-  const rate = profile === 'kk' ? 0.86 : 0.76
+  const frVoice = voices.find((v) => v.lang.toLowerCase().startsWith('fr')) ?? null
+  const useKazakh = profile === 'kk'
+  const spokenVoice = useKazakh ? voice : (frVoice ?? voice)
+  const spokenLang = useKazakh ? (voice?.lang ?? 'kk-KZ') : (frVoice?.lang ?? 'fr-FR')
+  const spoken = useKazakh ? raw : toTtsText(raw, 'fr')
+  const rate = useKazakh ? 0.86 : 0.72
 
   const letter = lowerCyr(raw)
   const hint = letter.length === 1 ? LETTER_HINT_FR[letter] : undefined
-  const frVoice = voices.find((v) => v.lang.toLowerCase().startsWith('fr')) ?? null
 
   const queue: SpeechSynthesisUtterance[] = []
   if (hint && frVoice) {
     queue.push(makeUtterance(hint, frVoice, frVoice.lang, 0.95))
   }
-  queue.push(makeUtterance(spoken || raw, voice, lang, rate))
+  queue.push(makeUtterance(spoken || raw, spokenVoice, spokenLang, rate))
 
   let i = 0
   const play = () => {
