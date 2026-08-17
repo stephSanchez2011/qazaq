@@ -464,15 +464,18 @@ button {
   padding: 28px 16px;
 }
 
-.word-card .kk {
+.word-card .kk,
+.word-card .target {
   font-size: 36px;
   font-weight: 700;
   display: block;
   margin: 8px 0 4px;
 }
 
-.word-card .fr {
+.word-card .fr,
+.word-card .gloss {
   font-size: 18px;
+  color: var(--muted);
 }
 
 .row-actions {

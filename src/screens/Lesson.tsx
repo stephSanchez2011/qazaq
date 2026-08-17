@@ -115,24 +115,26 @@ export function Lesson() {
           </div>
           <p className="ipa">/{currentLetter.ipa || '—'}/</p>
           <p>{currentLetter.hint}</p>
-          <p className="muted">
-            {learnFr ? (
-              <>
-                <b>{currentLetter.exampleFr}</b>
-                {' — '}
-                <span className="kk">{progress.script === 'cyr' ? currentLetter.exampleCyr : currentLetter.exampleLat}</span>
-              </>
-            ) : (
-              <>
-                <span className="kk">
-                  {progress.script === 'cyr' ? currentLetter.exampleCyr : currentLetter.exampleLat}
-                </span>
-                {' — '}
-                {currentLetter.exampleFr}
-              </>
-            )}
-          </p>
-          <Speak text={learnFr ? currentLetter.exampleFr : currentLetter.cyr} lang={learnFr ? 'fr' : 'kk'} />
+          {learnFr ? (
+            <>
+              <p className="target">{currentLetter.exampleFr}</p>
+              <p className="gloss">
+                {progress.script === 'cyr' ? currentLetter.exampleCyr : currentLetter.exampleLat}
+              </p>
+            </>
+          ) : (
+            <p className="muted">
+              <span className="kk">
+                {progress.script === 'cyr' ? currentLetter.exampleCyr : currentLetter.exampleLat}
+              </span>
+              {' — '}
+              {currentLetter.exampleFr}
+            </p>
+          )}
+          <Speak
+            text={learnFr ? currentLetter.exampleFr : currentLetter.cyr}
+            lang={learnFr ? 'fr' : 'kk'}
+          />
           <ProgressBar value={((index + 1) / totalItems) * 100} />
           <div className="row-actions">
             <button type="button" className="btn primary" onClick={nextItem}>

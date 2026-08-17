@@ -47,7 +47,7 @@ export function Alphabet() {
             className={`letter ${l.core ? 'core' : ''} ${l.cyr === sel ? 'on' : ''}`}
             onClick={() => {
               setSel(l.cyr)
-              if (learnFr) speakFrench(l.exampleFr || l.lat)
+              if (learnFr) speakFrench(l.name)
               else speakKazakh(l.cyr)
             }}
           >
@@ -66,22 +66,21 @@ export function Alphabet() {
           /{letter.ipa || '—'}/ · {letter.name}
         </p>
         <p>{letter.hint}</p>
-        <p className="ex">
-          {learnFr ? (
-            <>
-              <b>{letter.exampleFr}</b>
-              <span className="muted">
-                {' '}
-                — {progress.script === 'cyr' ? letter.exampleCyr : letter.exampleLat}
-              </span>
-            </>
-          ) : (
-            <>
-              <b className="kk">{progress.script === 'cyr' ? letter.exampleCyr : letter.exampleLat}</b>
-              <span className="muted"> — {letter.exampleFr}</span>
-            </>
-          )}
-        </p>
+        {learnFr ? (
+          <>
+            <p className="target" style={{ fontSize: 28, fontWeight: 700, margin: '8px 0 4px' }}>
+              {letter.exampleFr}
+            </p>
+            <p className="muted">
+              {progress.script === 'cyr' ? letter.exampleCyr : letter.exampleLat}
+            </p>
+          </>
+        ) : (
+          <p className="ex">
+            <b className="kk">{progress.script === 'cyr' ? letter.exampleCyr : letter.exampleLat}</b>
+            <span className="muted"> — {letter.exampleFr}</span>
+          </p>
+        )}
       </div>
     </Screen>
   )
