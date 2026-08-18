@@ -136,6 +136,11 @@ export function Home() {
             <b>{tr('home.alphabet')}</b>
             <span>{tr(learnFr ? 'home.alphabet.sub.fr' : 'home.alphabet.sub.kk')}</span>
           </button>
+          <button type="button" className="tile" onClick={() => go('quiz')}>
+            <span className="pill">{tr('pill.quiz')}</span>
+            <b>{tr('home.quiz')}</b>
+            <span>{tr('home.quiz.sub')}</span>
+          </button>
           <button type="button" className="tile" onClick={() => go('phrases')}>
             <span className="pill">{tr('pill.oral')}</span>
             <b>{tr('home.phrases')}</b>

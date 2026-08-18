@@ -14,7 +14,7 @@ import type { Word } from '../data/types'
 type Phase = 'intro' | 'item' | 'quiz' | 'done'
 
 export function Lesson() {
-  const { progress, lessonId, go, finishLesson, tr } = useApp()
+  const { progress, lessonId, go, finishLesson, setAlphaQuizBest, tr } = useApp()
   const lesson = lessonId ? lessonById[lessonId] : undefined
   const items: Word[] = useMemo(
     () => (lesson ? lesson.wordIds.map((id) => wordsById[id]).filter((w): w is Word => Boolean(w)) : []),
@@ -188,6 +188,7 @@ export function Lesson() {
           onFinished={(s, total) => {
             setScore(s)
             setAlphaTotal(total)
+            setAlphaQuizBest(s)
             finishLesson(currentLesson.id)
             setPhase('done')
           }}

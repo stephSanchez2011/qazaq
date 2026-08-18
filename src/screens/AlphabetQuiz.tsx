@@ -50,7 +50,7 @@ export function AlphabetQuizPlay({
   onFinished?: (score: number, total: number) => void
   embed?: boolean
 }) {
-  const { progress, awardXp, tr } = useApp()
+  const { progress, awardXp, setAlphaQuizBest, tr } = useApp()
   const learnFr = progress.learn === 'fr'
   const letters = learnFr ? frenchAlphabet : alphabet
   const [quiz] = useState(() => buildAlphabetQuiz(letters, progress.learn, progress.script, 10))
@@ -77,6 +77,7 @@ export function AlphabetQuizPlay({
         onFinished(score, quiz.length)
         return
       }
+      setAlphaQuizBest(score)
       awardXp(score * 4)
       setI((n) => n + 1)
       return

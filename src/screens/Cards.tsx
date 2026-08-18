@@ -39,7 +39,7 @@ export function Cards() {
     )
   }
 
-  const frontFr = learnFr ? i % 2 === 0 : i % 2 === 0
+  const frontFr = learnFr ? i % 2 !== 0 : i % 2 === 0
 
   return (
     <Screen>

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import type { LearnTrack, Script } from './data/types'
 import {
   addXp,
+  completeDialogue,
   completeLesson,
   defaultProgress,
   loadProgress,
@@ -10,6 +11,7 @@ import {
   saveProgress,
   type Progress,
 } from './lib/progress'
+import { readHash, writeHash } from './lib/routing'
 import { t, type I18nKey } from './lib/i18n'
 import { preloadVoices } from './lib/speech'
 
@@ -38,8 +40,10 @@ type AppState = {
   setLearn: (learn: LearnTrack) => void
   awardXp: (n: number) => void
   finishLesson: (id: string) => void
+  finishDialogue: (id: string) => void
   gradeCard: (wordId: string, ok: boolean) => void
   setQuizBest: (score: number) => void
+  setAlphaQuizBest: (score: number) => void
   wipeProgress: () => void
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string
 }
@@ -51,10 +55,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (typeof window === 'undefined') return defaultProgress()
     return loadProgress()
   })
-  const [route, setRoute] = useState<Route>('home')
-  const [lessonId, setLessonId] = useState<string | null>(null)
+  const initial = typeof window === 'undefined' ? { route: 'home' as Route, lessonId: null, practiceMode: null } : readHash()
+  const [route, setRoute] = useState<Route>(initial.route)
+  const [lessonId, setLessonId] = useState<string | null>(initial.lessonId)
   const [grammarId, setGrammarId] = useState<string | null>(null)
-  const [practiceMode, setPracticeMode] = useState<'alpha' | null>(null)
+  const [practiceMode, setPracticeMode] = useState<'alpha' | null>(initial.practiceMode)
 
   useEffect(() => {
     saveProgress(progress)
@@ -67,6 +72,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.lang = progress.learn === 'fr' ? 'kk' : 'fr'
   }, [progress.learn])
+
+  useEffect(() => {
+    writeHash(route, lessonId, practiceMode)
+  }, [route, lessonId, practiceMode])
+
+  useEffect(() => {
+    const onHash = () => {
+      const h = readHash()
+      setRoute(h.route)
+      setLessonId(h.lessonId)
+      setPracticeMode(h.practiceMode)
+    }
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
 
   const value = useMemo<AppState>(
     () => ({
@@ -86,9 +106,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setLearn: (learn) => setProgress((p) => ({ ...p, learn })),
       awardXp: (n) => setProgress((p) => addXp(p, n)),
       finishLesson: (id) => setProgress((p) => completeLesson(p, id)),
+      finishDialogue: (id) => setProgress((p) => completeDialogue(p, id)),
       gradeCard: (wordId, ok) => setProgress((p) => reviewCard(p, wordId, ok)),
       setQuizBest: (score) =>
         setProgress((p) => ({ ...p, quizBest: Math.max(p.quizBest, score) })),
+      setAlphaQuizBest: (score) =>
+        setProgress((p) => ({ ...p, alphaQuizBest: Math.max(p.alphaQuizBest, score) })),
       wipeProgress: () => setProgress((p) => resetProgress(p.script, p.learn)),
       tr: (key, vars) => t(progress.learn, key, vars),
     }),

@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
+import { phrases } from '../data/phrases'
 import { words } from '../data/words'
-import { buildMatchRound, isFrenchMatch, isKazakhMatch, shuffle, uniqueOptions } from '../lib/quiz'
+import { buildMatchRound, buildPhraseQuiz, isFrenchMatch, isKazakhMatch, shuffle, uniqueOptions } from '../lib/quiz'
 import { speakFrench, speakKazakh } from '../lib/speech'
 import { useApp } from '../state'
 import { ExtraKeys, Screen } from '../ui'
 import { AlphabetQuizPlay } from './AlphabetQuiz'
 import type { Word } from '../data/types'
 
-type Mode = 'menu' | 'type' | 'match' | 'listen' | 'alpha'
+type Mode = 'menu' | 'type' | 'match' | 'listen' | 'alpha' | 'phrases'
 
 function poolFor(progressCards: Record<string, unknown>): Word[] {
   const seen = new Set(Object.keys(progressCards))
@@ -35,6 +36,9 @@ export function Practice() {
   }
   if (mode === 'alpha') {
     return <AlphabetQuizPlay onExit={() => setMode('menu')} />
+  }
+  if (mode === 'phrases') {
+    return <PhraseDrill onExit={() => setMode('menu')} awardXp={awardXp} />
   }
 
   return (
@@ -72,6 +76,13 @@ export function Practice() {
           <span className="grow">
             <b>{tr('practice.alpha')}</b>
             <span className="muted">{tr(learnFr ? 'practice.alpha.sub.fr' : 'practice.alpha.sub.kk')}</span>
+          </span>
+        </button>
+        <button type="button" className="list-row" onClick={() => setMode('phrases')}>
+          <span className="badge">💬</span>
+          <span className="grow">
+            <b>{tr('practice.phrases')}</b>
+            <span className="muted">{tr('practice.phrases.sub')}</span>
           </span>
         </button>
       </div>
@@ -219,6 +230,7 @@ function MatchDrill({
   awardXp: (n: number) => void
 }) {
   const { progress, tr } = useApp()
+  const learnFr = progress.learn === 'fr'
   const [round, setRound] = useState(0)
   const [board, setBoard] = useState(() => buildMatchRound(bank, 4))
   const [picked, setPicked] = useState<string | null>(null)
@@ -291,7 +303,7 @@ function MatchDrill({
               disabled={matched.includes(w.id)}
               onClick={() => tapKk(w.id)}
             >
-              {progress.script === 'cyr' ? w.cyr : w.lat}
+              {learnFr ? w.fr : progress.script === 'cyr' ? w.cyr : w.lat}
             </button>
           ))}
         </div>
@@ -304,7 +316,7 @@ function MatchDrill({
               disabled={matched.includes(w.id)}
               onClick={() => tapFr(w.id)}
             >
-              {w.fr}
+              {learnFr ? (progress.script === 'cyr' ? w.cyr : w.lat) : w.fr}
             </button>
           ))}
         </div>
@@ -412,6 +424,112 @@ function ListenDrill({
           {tr('practice.listen.hint')}
         </p>
         <div style={{ textAlign: 'left', marginTop: 16 }}>
+          {q.options.map((opt) => {
+            let cls = 'choice'
+            if (picked) {
+              if (opt === q.answer) cls += ' right'
+              else if (opt === picked) cls += ' wrong'
+            }
+            return (
+              <button
+                key={opt}
+                type="button"
+                className={cls}
+                onClick={() => {
+                  if (picked) return
+                  setPicked(opt)
+                  if (opt === q.answer) setScore((s) => s + 1)
+                }}
+              >
+                {opt}
+              </button>
+            )
+          })}
+        </div>
+        {picked && (
+          <div className="row-actions">
+            <button
+              type="button"
+              className="btn primary"
+              onClick={() => {
+                setPicked(null)
+                setI((n) => n + 1)
+              }}
+            >
+              {tr('continue')}
+            </button>
+          </div>
+        )}
+      </div>
+    </Screen>
+  )
+}
+
+function PhraseDrill({
+  onExit,
+  awardXp,
+}: {
+  onExit: () => void
+  awardXp: (n: number) => void
+}) {
+  const { progress, tr } = useApp()
+  const [quiz] = useState(() => buildPhraseQuiz(phrases, progress.script, progress.learn, 8))
+  const [i, setI] = useState(0)
+  const [picked, setPicked] = useState<string | null>(null)
+  const [score, setScore] = useState(0)
+  const q = quiz[i]
+
+  if (!q) {
+    return (
+      <Screen>
+        <div className="card center">
+          <div className="big-letter">{score >= 6 ? '🌟' : '💬'}</div>
+          <h3>
+            {score}/{quiz.length}
+          </h3>
+          <p className="muted">{tr('practice.phrases.done')}</p>
+          <div className="row-actions">
+            <button
+              type="button"
+              className="btn primary"
+              onClick={() => {
+                awardXp(score * 5)
+                onExit()
+              }}
+            >
+              {tr('lesson.finish')}
+            </button>
+          </div>
+        </div>
+      </Screen>
+    )
+  }
+
+  return (
+    <Screen>
+      <div className="topbar">
+        <button type="button" className="back" onClick={onExit} aria-label={tr('back')}>
+          ←
+        </button>
+        <h2>{tr('practice.phrases')}</h2>
+        <span className="muted">
+          {i + 1}/{quiz.length}
+        </span>
+      </div>
+      <div className="card">
+        <p className="prompt">{q.promptLang === 'kk' ? tr('quiz.mean') : tr('quiz.say')}</p>
+        <p className="hello kk" style={{ color: 'var(--ink)', fontSize: 22, margin: '8px 0 16px' }}>
+          {q.prompt}
+        </p>
+        <button
+          type="button"
+          className="speak ghost"
+          onClick={() => (q.speakLang === 'fr' ? speakFrench(q.speak) : speakKazakh(q.speak))}
+          aria-label={tr('listen')}
+        >
+          ♪
+        </button>
+        <div style={{ marginTop: 12 }}>
           {q.options.map((opt) => {
             let cls = 'choice'
             if (picked) {

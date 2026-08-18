@@ -1,4 +1,5 @@
-import type { AlphabetLetter, LearnTrack, Script, Word } from '../data/types'
+import type { DialogueLine } from '../data/dialogues'
+import type { AlphabetLetter, LearnTrack, Phrase, Script, Word } from '../data/types'
 
 export type ChoiceQuestion = {
   kind: 'choice'
@@ -219,4 +220,96 @@ export function buildAlphabetQuiz(
   }
 
   return out
+}
+
+export type PhraseQuestion = {
+  prompt: string
+  promptLang: 'fr' | 'kk'
+  answer: string
+  options: string[]
+  speak: string
+  speakLang: 'fr' | 'kk'
+  phrase: Phrase
+}
+
+export function buildPhraseQuiz(
+  bank: Phrase[],
+  script: Script,
+  learn: LearnTrack,
+  size = 8,
+): PhraseQuestion[] {
+  const learnFr = learn === 'fr'
+  const pick = shuffle(bank).slice(0, Math.min(size, bank.length))
+  const frPool = bank.map((p) => p.fr)
+  const kkPool = bank.map((p) => (script === 'cyr' ? p.cyr : p.lat))
+
+  return pick.map((phrase, i) => {
+    const kk = script === 'cyr' ? phrase.cyr : phrase.lat
+    const toTarget = learnFr ? i % 2 === 0 : i % 2 !== 0
+    if (toTarget) {
+      return {
+        prompt: kk,
+        promptLang: 'kk' as const,
+        answer: phrase.fr,
+        options: uniqueOptions(phrase.fr, frPool, 4),
+        speak: phrase.cyr,
+        speakLang: 'kk' as const,
+        phrase,
+      }
+    }
+    return {
+      prompt: phrase.fr,
+      promptLang: 'fr' as const,
+      answer: kk,
+      options: uniqueOptions(kk, kkPool, 4),
+      speak: phrase.fr,
+      speakLang: 'fr' as const,
+      phrase,
+    }
+  })
+}
+
+export type DialogueQuestion = {
+  prompt: string
+  promptLang: 'fr' | 'kk'
+  answer: string
+  options: string[]
+  speak: string
+  speakLang: 'fr' | 'kk'
+}
+
+export function buildDialogueQuiz(
+  sceneLines: DialogueLine[],
+  pool: DialogueLine[],
+  script: Script,
+  learn: LearnTrack,
+  size = 3,
+): DialogueQuestion[] {
+  const learnFr = learn === 'fr'
+  const pick = shuffle(sceneLines).slice(0, Math.min(size, sceneLines.length))
+  const frPool = pool.map((l) => l.fr)
+  const kkPool = pool.map((l) => (script === 'cyr' ? l.cyr : l.lat))
+
+  return pick.map((line, i) => {
+    const kk = script === 'cyr' ? line.cyr : line.lat
+    const toFr = learnFr ? i % 2 !== 0 : i % 2 === 0
+    if (toFr) {
+      return {
+        prompt: kk,
+        promptLang: 'kk' as const,
+        answer: line.fr,
+        options: uniqueOptions(line.fr, frPool, 4),
+        speak: line.cyr,
+        speakLang: 'kk' as const,
+      }
+    }
+    return {
+      prompt: line.fr,
+      promptLang: 'fr' as const,
+      answer: kk,
+      options: uniqueOptions(kk, kkPool, 4),
+      speak: line.fr,
+      speakLang: 'fr' as const,
+    }
+  })
 }

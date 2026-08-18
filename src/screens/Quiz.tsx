@@ -40,6 +40,7 @@ export function Quiz() {
         <div className="card">
           <p>{tr('quiz.intro')}</p>
           <p className="muted">{tr('quiz.best', { n: progress.quizBest })}</p>
+          <p className="muted">{tr('quiz.alpha.best', { n: progress.alphaQuizBest })}</p>
           <div className="row-actions">
             <button type="button" className="btn gold" onClick={start}>
               {tr('quiz.start')}

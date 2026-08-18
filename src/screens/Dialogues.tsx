@@ -1,16 +1,39 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { dialogues } from '../data/dialogues'
+import { buildDialogueQuiz } from '../lib/quiz'
 import { speakFrench, speakKazakh } from '../lib/speech'
 import { useApp } from '../state'
 import { Back, Kk, Screen, Speak } from '../ui'
 
+type Phase = 'lines' | 'quiz' | 'done'
+
 export function Dialogues() {
-  const { go, awardXp, progress, tr } = useApp()
+  const { go, finishDialogue, progress, tr } = useApp()
   const [id, setId] = useState<string | null>(null)
+  const [phase, setPhase] = useState<Phase>('lines')
   const [line, setLine] = useState(0)
   const [showTr, setShowTr] = useState(false)
+  const [qIndex, setQIndex] = useState(0)
+  const [picked, setPicked] = useState<string | null>(null)
+  const [score, setScore] = useState(0)
   const d = dialogues.find((x) => x.id === id)
   const learnFr = progress.learn === 'fr'
+  const allLines = useMemo(() => dialogues.flatMap((x) => x.lines), [])
+  const quiz = useMemo(
+    () => (d ? buildDialogueQuiz(d.lines, allLines, progress.script, progress.learn, 3) : []),
+    [d, allLines, progress.script, progress.learn],
+  )
+  const question = quiz[qIndex]
+
+  function openDialogue(dialogueId: string) {
+    setId(dialogueId)
+    setPhase('lines')
+    setLine(0)
+    setShowTr(false)
+    setQIndex(0)
+    setPicked(null)
+    setScore(0)
+  }
 
   if (!d) {
     return (
@@ -23,24 +46,107 @@ export function Dialogues() {
           {tr('dlg.intro')}
         </p>
         <div className="stack">
-          {dialogues.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className="list-row"
-              onClick={() => {
-                setId(item.id)
-                setLine(0)
-                setShowTr(false)
-              }}
-            >
-              <span className="badge">🎙</span>
-              <span className="grow">
-                <b>{item.title}</b>
-                <span className="muted">{item.place}</span>
-              </span>
+          {dialogues.map((item) => {
+            const done = progress.completedDialogues.includes(item.id)
+            return (
+              <button key={item.id} type="button" className="list-row" onClick={() => openDialogue(item.id)}>
+                <span className={`badge ${done ? 'done' : ''}`}>{done ? '✓' : '🎙'}</span>
+                <span className="grow">
+                  <b>{item.title}</b>
+                  <span className="muted">{item.place}</span>
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </Screen>
+    )
+  }
+
+  if (phase === 'done') {
+    return (
+      <Screen>
+        <div className="card center">
+          <div className="big-letter">🎉</div>
+          <h3>{tr('dlg.done')}</h3>
+          <p className="muted">{tr('dlg.quiz.done', { score, total: quiz.length })}</p>
+          <div className="row-actions">
+            <button type="button" className="btn primary" onClick={() => setId(null)}>
+              {tr('back')}
             </button>
-          ))}
+          </div>
+        </div>
+      </Screen>
+    )
+  }
+
+  if (phase === 'quiz' && question) {
+    return (
+      <Screen>
+        <div className="topbar">
+          <Back onClick={() => setPhase('lines')} />
+          <h2>{tr('dlg.quiz')}</h2>
+          <span className="muted">
+            {qIndex + 1}/{quiz.length}
+          </span>
+        </div>
+        <div className="card">
+          <p className="prompt">{question.promptLang === 'kk' ? tr('quiz.mean') : tr('quiz.say')}</p>
+          <p className="hello kk" style={{ color: 'var(--ink)', fontSize: 22, margin: '8px 0 16px' }}>
+            {question.prompt}
+          </p>
+          <button
+            type="button"
+            className="speak ghost"
+            onClick={() =>
+              question.speakLang === 'fr' ? speakFrench(question.speak) : speakKazakh(question.speak)
+            }
+            aria-label={tr('listen')}
+          >
+            ♪
+          </button>
+          <div style={{ marginTop: 12 }}>
+            {question.options.map((opt) => {
+              let cls = 'choice'
+              if (picked) {
+                if (opt === question.answer) cls += ' right'
+                else if (opt === picked) cls += ' wrong'
+              }
+              return (
+                <button
+                  key={opt}
+                  type="button"
+                  className={cls}
+                  onClick={() => {
+                    if (picked) return
+                    setPicked(opt)
+                    if (opt === question.answer) setScore((s) => s + 1)
+                  }}
+                >
+                  {opt}
+                </button>
+              )
+            })}
+          </div>
+          {picked && (
+            <div className="row-actions">
+              <button
+                type="button"
+                className="btn primary"
+                onClick={() => {
+                  if (qIndex + 1 >= quiz.length) {
+                    finishDialogue(d.id)
+                    setPhase('done')
+                    return
+                  }
+                  setPicked(null)
+                  setQIndex((n) => n + 1)
+                }}
+              >
+                {qIndex + 1 >= quiz.length ? tr('quiz.seeScore') : tr('continue')}
+              </button>
+            </div>
+          )}
         </div>
       </Screen>
     )
@@ -53,18 +159,10 @@ export function Dialogues() {
     return (
       <Screen>
         <div className="card center">
-          <h3>{tr('dlg.done')}</h3>
-          <p className="muted">{d.title}</p>
+          <h3>{tr('dlg.quiz')}</h3>
           <div className="row-actions">
-            <button
-              type="button"
-              className="btn primary"
-              onClick={() => {
-                awardXp(12)
-                setId(null)
-              }}
-            >
-              {tr('back')}
+            <button type="button" className="btn primary" onClick={() => setPhase('quiz')}>
+              {tr('quiz.start')}
             </button>
           </div>
         </div>
@@ -126,7 +224,7 @@ export function Dialogues() {
             }
           }}
         >
-          {last ? tr('lesson.finish') : tr('dlg.next')}
+          {last ? tr('dlg.quiz') : tr('dlg.next')}
         </button>
       </div>
     </Screen>

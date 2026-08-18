@@ -45,11 +45,13 @@ const S = {
   'pill.memoire': { fr: 'mémoire', kk: 'жады' },
   'pill.base': { fr: 'base', kk: 'негіз' },
   'pill.oral': { fr: 'oral', kk: 'ауызша' },
+  'pill.quiz': { fr: 'quiz', kk: 'квиз' },
   'learn.title': { fr: 'Parcours', kk: 'Бағдарлама' },
   'learn.intro.kk': {
     fr: '{n} leçons, du premier сәлем jusqu’à la yourte. Chaque leçon débloque la suivante.',
     kk: '{n} сабақ: алғашқы сәлемнен киіз үйге дейін. Әр сабақ келесісін ашады.',
   },
+  'learn.bonus': { fr: 'Bonus', kk: 'Бонус' },
   'learn.intro.fr': {
     fr: '{n} leçons, du premier bonjour jusqu’à la maison. Chaque leçon débloque la suivante.',
     kk: '{n} сабақ: алғашқы bonjour-дан үйге дейін. Әр сабақ келесісін ашады.',
@@ -137,6 +139,15 @@ const S = {
     fr: 'La voix peut être approximative selon le téléphone.',
     kk: 'Дауыс телефонға байланысты өзгеруі мүмкін.',
   },
+  'practice.phrases': { fr: 'Phrases', kk: 'Сөйлемдер' },
+  'practice.phrases.sub': {
+    fr: 'Huit répliques du voyageur, QCM',
+    kk: 'Сегіз саяхат фразасы, тест',
+  },
+  'practice.phrases.done': {
+    fr: 'Les phrases reviennent dans les dialogues.',
+    kk: 'Фразалар диалогта қайта кездеседі.',
+  },
   'practice.alpha': { fr: 'Alphabet', kk: 'Әліппе' },
   'practice.alpha.sub.kk': {
     fr: 'Lettres, sons et mots — 10 questions',
@@ -162,6 +173,9 @@ const S = {
     fr: 'Dix questions : lettre, son, mot d’exemple, écoute.',
     kk: 'Он сұрақ: әріп, дыбыс, мысал, тыңдау.',
   },
+  'quiz.alpha.best': { fr: 'Meilleur alphabet : {n}/10', kk: 'Үздік әліппе: {n}/10' },
+  'home.quiz': { fr: 'Quiz', kk: 'Квиз' },
+  'home.quiz.sub': { fr: 'Mots ou alphabet', kk: 'Сөз немесе әліппе' },
   'dict.title': { fr: 'Lexique', kk: 'Сөздік' },
   'dict.search': { fr: 'Chercher un mot…', kk: 'Сөз іздеу…' },
   'dict.all': { fr: 'Tout', kk: 'Бәрі' },
@@ -184,6 +198,8 @@ const S = {
     kk: 'Бес сахна, реплика бойынша тыңдаңыз.',
   },
   'dlg.done': { fr: 'Керемет! Scène finie', kk: 'Керемет! Сахна бітті' },
+  'dlg.quiz': { fr: 'Mini-quiz de la scène', kk: 'Сахна квизі' },
+  'dlg.quiz.done': { fr: 'Quiz : {score}/{total}', kk: 'Квиз: {score}/{total}' },
   'back': { fr: 'Retour', kk: 'Артқа' },
   'dlg.tr': { fr: 'Traduction', kk: 'Аударма' },
   'dlg.hide': { fr: 'Masquer', kk: 'Жасыру' },
@@ -304,6 +320,8 @@ const S = {
   'l13.sub': { fr: 'Steppe, neige, Nauryz', kk: 'Дала, қар, Наурыз' },
   'l14.title': { fr: 'La maison', kk: 'Үй' },
   'l14.sub': { fr: 'Yourte, porte, table', kk: 'Киіз үй, есік, үстел' },
+  'l15.title': { fr: 'Bonus — au quotidien', kk: 'Бонус — күнделікті' },
+  'l15.sub': { fr: 'Corps, émotions, jours', kk: 'Дене, эмоция, апта күндері' },
   'listen': { fr: 'Écouter', kk: 'Тыңдау' },
 } as const satisfies Record<string, Pair>
 

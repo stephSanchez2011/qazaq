@@ -1,3 +1,4 @@
+import { lessonById } from '../data/lessons'
 import type { LearnTrack, Script } from '../data/types'
 
 const KEY = 'qazaq-progress-v1'
@@ -20,6 +21,8 @@ export type Progress = {
   script: Script
   learn: LearnTrack
   quizBest: number
+  alphaQuizBest: number
+  completedDialogues: string[]
   dailyXp: number
   dailyStamp: string | null
   dailyGoal: number
@@ -47,6 +50,8 @@ export function defaultProgress(): Progress {
     script: 'cyr',
     learn: 'kk',
     quizBest: 0,
+    alphaQuizBest: 0,
+    completedDialogues: [],
     dailyXp: 0,
     dailyStamp: null,
     dailyGoal: 40,
@@ -59,7 +64,14 @@ export function loadProgress(): Progress {
     if (!raw) return defaultProgress()
     const parsed = JSON.parse(raw) as Partial<Progress>
     const learn = parsed.learn === 'fr' ? 'fr' : 'kk'
-    return { ...defaultProgress(), ...parsed, learn, cards: parsed.cards ?? {} }
+    return {
+      ...defaultProgress(),
+      ...parsed,
+      learn,
+      cards: parsed.cards ?? {},
+      completedDialogues: parsed.completedDialogues ?? [],
+      alphaQuizBest: parsed.alphaQuizBest ?? 0,
+    }
   } catch {
     return defaultProgress()
   }
@@ -96,11 +108,32 @@ export function wordOfDayIndex(length: number): number {
   return length === 0 ? 0 : hash % length
 }
 
+function seedLessonCards(p: Progress, lessonId: string): Progress {
+  const lesson = lessonById[lessonId]
+  if (!lesson || lesson.kind !== 'words' || lesson.wordIds.length === 0) return p
+  const cards = { ...p.cards }
+  for (const wordId of lesson.wordIds) {
+    if (!cards[wordId]) {
+      cards[wordId] = { box: 1, due: 0, seen: 0, correct: 0 }
+    }
+  }
+  return { ...p, cards }
+}
+
 export function completeLesson(p: Progress, id: string): Progress {
-  if (p.completedLessons.includes(id)) return addXp(p, 5)
+  const seeded = seedLessonCards(p, id)
+  if (seeded.completedLessons.includes(id)) return addXp(seeded, 5)
   return addXp(
-    { ...p, completedLessons: [...p.completedLessons, id] },
+    { ...seeded, completedLessons: [...seeded.completedLessons, id] },
     25,
+  )
+}
+
+export function completeDialogue(p: Progress, id: string): Progress {
+  if (p.completedDialogues.includes(id)) return addXp(p, 5)
+  return addXp(
+    { ...p, completedDialogues: [...p.completedDialogues, id] },
+    12,
   )
 }
 

@@ -30,6 +30,7 @@ export function Learn() {
               <span className="grow">
                 <b>
                   {i + 1}. {lessonTitle(progress.learn, lesson.id) ?? lesson.title}
+                  {lesson.id === 'l15' ? ` · ${tr('learn.bonus')}` : ''}
                 </b>
                 <span className="muted">
                   {locked ? tr('learn.locked') : (lessonSubtitle(progress.learn, lesson.id) ?? lesson.subtitle)}
